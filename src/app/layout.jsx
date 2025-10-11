@@ -1,7 +1,7 @@
 ﻿// src/app/layout.jsx
 import '../styles/globals.css';
-import Header from '@/components/layout/Header';
-import Footer from '@/components/layout/Footer';
+import Header from './components/layout/Header';
+import Footer from './components/layout/Footer';
 
 export const metadata = {
   title: 'Meetral — Trouve et crée des événements',
