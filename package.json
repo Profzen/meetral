@@ -16,7 +16,7 @@
     "@supabase/supabase-js": "^2.0.0",
     "cloudinary": "^2.8.0",
     "jspdf": "^2.5.2",
-    "next": "15.5.4",
+    "next": "^15.6.0",
     "qrcode": "^1.5.3",
     "react": "18.2.0",
     "react-dom": "18.2.0"
@@ -27,7 +27,7 @@
     "@testing-library/user-event": "^14.4.3",
     "autoprefixer": "^10.4.21",
     "eslint": "^8.57.0",
-    "eslint-config-next": "15.5.4",
+    "eslint-config-next": "^15.6.0",
     "jsdom": "^22.1.0",
     "playwright": "^1.45.0",
     "postcss": "^8.5.6",
