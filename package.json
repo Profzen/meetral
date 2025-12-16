@@ -26,6 +26,8 @@
     "@testing-library/react": "^14.0.0",
     "@testing-library/user-event": "^14.4.3",
     "autoprefixer": "^10.4.21",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "15.5.4",
     "jsdom": "^22.1.0",
     "playwright": "^1.45.0",
     "postcss": "^8.5.6",
