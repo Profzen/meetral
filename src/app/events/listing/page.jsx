@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n';
 import { supabase } from '@/lib/supabaseClient';
+import { eventCache } from '@/lib/eventCache';
 import EventCard from '@/components/events/EventCard';
 import EventModal from '@/components/events/EventModal';
 import FilterBar from '@/components/events/FilterBar';
@@ -17,12 +18,20 @@ export default function EventsListingPage() {
   const [viewEvent, setViewEvent] = useState(null);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [userFavorites, setUserFavorites] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const { t } = useTranslation();
 
   const handleFiltersChange = (filters) => {
     let results = [...allEvents];
 
-    // Apply favorites filter first
+    // Filter out full events first
+    results = results.filter((e) => {
+      const registered = e.registered || 0;
+      const capacity = e.capacity || 0;
+      return registered < capacity; // Only show events with available places
+    });
+
+    // Apply favorites filter
     if (showFavoritesOnly) {
       results = results.filter((e) => userFavorites.includes(e.id));
     }
@@ -77,14 +86,71 @@ export default function EventsListingPage() {
     setVisibleCount((c) => c + 20);
   }
 
-  // fetch events from smart-ranked server route (large limit for pagination)
+  // Function to refresh events (called after registration)
+  async function refreshEvents() {
+    try {
+      // Clear cache
+      eventCache.clear('listing_events');
+      
+      // Fetch fresh data
+      const { data: session } = await supabase.auth.getSession();
+      const userId = session?.session?.user?.id;
+
+      const query = new URLSearchParams({
+        limit: '200',
+        ...(userId && { userId }),
+      });
+
+      const res = await fetch(`/api/events/smart-ranked?${query}`);
+      const json = await res.json();
+      let list = json?.events ?? [];
+
+      if (!Array.isArray(list) || list.length < 20) {
+        const res2 = await fetch('/api/events');
+        const json2 = await res2.json();
+        list = json2?.events ?? [];
+      }
+
+      eventCache.set('listing_events', list);
+      setAllEvents(list);
+      setFilteredEvents(list);
+    } catch (e) {
+      console.error('Refresh events error', e);
+    }
+  }
+
+  // fetch events from smart-ranked server route with caching
   useEffect(() => {
     let mounted = true;
     (async () => {
       try {
-        const res = await fetch('/api/events/smart-ranked?limit=200');
+        setIsLoading(true);
+
+        // Check cache first
+        const cached = eventCache.get('listing_events');
+        if (cached) {
+          if (mounted) {
+            setAllEvents(cached);
+            setFilteredEvents(cached);
+            setIsLoading(false);
+          }
+          return;
+        }
+
+        // Get userId for smart-ranked API
+        const { data: session } = await supabase.auth.getSession();
+        const userId = session?.session?.user?.id;
+
+        // Build query with userId if available
+        const query = new URLSearchParams({
+          limit: '200',
+          ...(userId && { userId }),
+        });
+
+        const res = await fetch(`/api/events/smart-ranked?${query}`);
         const json = await res.json();
         let list = json?.events ?? [];
+
         // Fallback: ensure minimum of 20 items for initial view
         if (!Array.isArray(list) || list.length < 20) {
           try {
@@ -96,23 +162,30 @@ export default function EventsListingPage() {
             console.error('fallback /api/events error', e2);
           }
         }
+
         if (mounted) {
+          // Cache the events
+          eventCache.set('listing_events', list);
           setAllEvents(list);
           setFilteredEvents(list);
+          setIsLoading(false);
         }
       } catch (e) {
         console.error('Fetch events listing error', e);
+        if (mounted) setIsLoading(false);
       }
     })();
     return () => (mounted = false);
   }, []);
 
-  // Fetch user's favorites
+  // Fetch user's favorites - removed since now included in smart-ranked
   useEffect(() => {
     async function fetchFavorites() {
       const { data: session } = await supabase.auth.getSession();
       if (!session?.session) return;
 
+      // If smart-ranked already returned isFavorited flag, we can skip this
+      // But keep it for backward compatibility with non-ranked results
       const token = session.session.access_token;
       try {
         const res = await fetch('/api/favorites', {
@@ -212,7 +285,11 @@ export default function EventsListingPage() {
       {/* Événements - Grid View */}
       {viewMode === 'grid' && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {filteredEvents.length > 0 ? (
+          {isLoading ? (
+            <div className="col-span-full text-center py-12">
+              <p className="text-[var(--text-muted)] text-lg">Chargement des événements...</p>
+            </div>
+          ) : filteredEvents.length > 0 ? (
             filteredEvents.slice(0, visibleCount).map((event) => (
               <EventCard key={event.id} event={event} onOpen={() => setViewEvent(event)} />
             ))
@@ -233,16 +310,23 @@ export default function EventsListingPage() {
       {/* Événements - List View */}
       {viewMode === 'list' && (
         <div className="space-y-4">
-          {filteredEvents.length > 0 ? (
+          {isLoading ? (
+            <div className="text-center py-12 bg-[var(--surface)] rounded-lg border border-[#111]">
+              <p className="text-[var(--text-muted)] text-base sm:text-lg">Chargement des événements...</p>
+            </div>
+          ) : filteredEvents.length > 0 ? (
             filteredEvents.slice(0, visibleCount).map((event) => (
               <div
                 key={event.id}
                 className="bg-[var(--surface)] rounded-lg shadow-md p-4 flex flex-col sm:flex-row gap-4 hover:shadow-lg transition border border-[#111]"
               >
                 <img
-                  src={event.image}
+                  src={event.cover_url || 'https://via.placeholder.com/600x400?text=Event'}
                   alt={event.title}
                   className="w-full sm:w-32 h-40 sm:h-32 object-cover rounded-md flex-shrink-0"
+                  onError={(e) => {
+                    e.target.src = 'https://via.placeholder.com/600x400?text=Event';
+                  }}
                 />
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
@@ -294,7 +378,11 @@ export default function EventsListingPage() {
       )}
 
       {viewEvent && (
-        <EventModal event={viewEvent} onClose={() => setViewEvent(null)} />
+        <EventModal 
+          event={viewEvent} 
+          onClose={() => setViewEvent(null)} 
+          onRegistrationSuccess={refreshEvents}
+        />
       )}
     </section>
   );

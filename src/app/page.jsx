@@ -19,6 +19,7 @@
 import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n';
+import { eventCache } from '@/lib/eventCache';
 import Hero from '@/components/home/Hero';
 import FilterBar from '@/components/home/FilterBar';
 import EventCard from '@/components/events/EventCard';
@@ -41,9 +42,28 @@ export default function HomePage() {
   async function fetchEvents() {
     setLoading(true);
     try {
-      const res = await fetch('/api/events/smart-ranked?limit=50');
+      // Check cache first
+      const cached = eventCache.get('home_events');
+      if (cached) {
+        setEvents(cached);
+        setFiltered(cached);
+        setLoading(false);
+        return;
+      }
+
+      // Get userId for smart-ranked API
+      const { data: session } = await supabase.auth.getSession();
+      const userId = session?.session?.user?.id;
+
+      const query = new URLSearchParams({
+        limit: '50',
+        ...(userId && { userId }),
+      });
+
+      const res = await fetch(`/api/events/smart-ranked?${query}`);
       const json = await res.json();
       const list = json?.events ?? [];
+      
       // Fallback: if ranked returns too few, fetch non-ranked list
       let source = list;
       if (!Array.isArray(source) || source.length < 12) {
@@ -56,8 +76,13 @@ export default function HomePage() {
           console.error('fallback /api/events error', e2);
         }
       }
+      
       // Keep only the top 12 for homepage display
       const top12 = (source || []).slice(0, 12);
+      
+      // Cache the results
+      eventCache.set('home_events', top12);
+      
       setEvents(top12);
       setFiltered(top12);
     } catch (err) {
@@ -117,6 +142,11 @@ export default function HomePage() {
   useEffect(() => {
     const term = (q || '').trim().toLowerCase();
     const out = events.filter((ev) => {
+      // Filter out full events first
+      const registered = ev.registered || 0;
+      const capacity = ev.capacity || 0;
+      if (registered >= capacity) return false; // Skip full events
+
       const title = (ev.title || '').toLowerCase();
       const desc = (ev.description || '').toLowerCase();
       const place = (ev.place || '').toLowerCase();
@@ -180,7 +210,16 @@ export default function HomePage() {
       </div>
 
       {/* Event modal (detail + inscription) */}
-      {viewEvent && <EventModal event={viewEvent} onClose={() => setViewEvent(null)} />}
+      {viewEvent && (
+        <EventModal 
+          event={viewEvent} 
+          onClose={() => setViewEvent(null)} 
+          onRegistrationSuccess={() => {
+            eventCache.clear('home_events');
+            fetchEvents();
+          }}
+        />
+      )}
     </div>
   );
 }

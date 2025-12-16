@@ -8,13 +8,30 @@ import { supabase } from '@/lib/supabaseClient';
 
 export default function EventCard({ event, onOpen }) {
   const { t } = useTranslation();
-  const { id, title, date, place, price, is_free, freefood, capacity, registered, image, description, cover_url, likes_count } = event;
+  const { id, title, date, place, price, is_free, freefood, capacity, registered, description, cover_url, likes_count } = event;
   const [isFavorited, setIsFavorited] = useState(false);
   const [likesCount, setLikesCount] = useState(likes_count || 0);
 
   const placesFilled = capacity > 0 ? Math.round((registered / capacity) * 100) : 0;
   const placesRemaining = capacity - registered;
   const isPaid = !is_free && price > 0;
+
+  // Validate and fix image URL (only cover_url exists now)
+  const getValidImageUrl = () => {
+    if (!cover_url) {
+      return 'https://via.placeholder.com/600x400?text=Event';
+    }
+    
+    // Check if URL is valid (starts with http/https or is a relative path starting with /)
+    if (cover_url.startsWith('http://') || cover_url.startsWith('https://') || cover_url.startsWith('/')) {
+      return cover_url;
+    }
+    
+    // Fallback to placeholder
+    return 'https://via.placeholder.com/600x400?text=Event';
+  };
+
+  const imageUrl = getValidImageUrl();
 
   // Check if user has favorited this event
   useEffect(() => {
@@ -84,9 +101,12 @@ export default function EventCard({ event, onOpen }) {
       {/* Image Container */}
       <div className="relative w-full h-56 bg-[#0b0b0b] overflow-hidden flex-shrink-0 rounded-b-none">
         <img
-          src={cover_url || image || 'https://via.placeholder.com/600x400?text=Event'}
+          src={imageUrl}
           alt={title}
           className="w-full h-full object-cover rounded-t-md border border-[#222]"
+          onError={(e) => {
+            e.target.src = 'https://via.placeholder.com/600x400?text=Event';
+          }}
         />
         
         {/* Badge Container - Fixed positioning */}

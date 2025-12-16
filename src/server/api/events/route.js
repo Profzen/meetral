@@ -11,8 +11,15 @@ export async function GET(req) {
 
     if (error) throw error;
     
+    // Filter out full events (registered >= capacity)
+    const availableEvents = (data || []).filter(event => {
+      const registered = event.registered || 0;
+      const capacity = event.capacity || 0;
+      return registered < capacity; // Only show events with available places
+    });
+    
     // Si pas de données, retourner des sample data pour tester
-    if (!data || data.length === 0) {
+    if (!availableEvents || availableEvents.length === 0) {
       const sampleEvents = [
         {
           id: '1',
@@ -22,6 +29,7 @@ export async function GET(req) {
           place: 'Paris 11e',
           price: 0,
           capacity: 50,
+          registered: 0,
           freefood: true,
           organizer_id: null,
           status: 'validé',
@@ -35,6 +43,7 @@ export async function GET(req) {
           place: 'Lyon 2e',
           price: 25,
           capacity: 20,
+          registered: 0,
           freefood: false,
           organizer_id: null,
           status: 'validé',
@@ -44,7 +53,7 @@ export async function GET(req) {
       return new Response(JSON.stringify({ events: sampleEvents }), { status: 200 });
     }
     
-    return new Response(JSON.stringify({ events: data }), { status: 200 });
+    return new Response(JSON.stringify({ events: availableEvents }), { status: 200 });
   } catch (err) {
     console.error('GET /api/events error', err);
     return new Response(JSON.stringify({ error: err.message, events: [] }), { status: 200 });

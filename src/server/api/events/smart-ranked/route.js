@@ -1,6 +1,7 @@
 // src/server/api/events/smart-ranked/route.js
-// GET /api/events/smart-ranked - Smart ranking algorithm
-// Scoring: imminence + popularity + fill rate + likes
+// GET /api/events/smart-ranked - Smart ranking algorithm with pagination
+// Query params: limit (default 200), offset (default 0), userId (to include user favorites)
+// Scoring: imminence + popularity + fill rate + likes + recency
 
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 
@@ -8,26 +9,55 @@ export async function GET(req) {
   try {
     const url = new URL(req.url);
     const limitParam = parseInt(url.searchParams.get('limit') || '', 10);
-    const limit = Number.isFinite(limitParam) ? Math.min(Math.max(limitParam, 1), 500) : 200; // default 200
-
-    console.log('[API] GET /api/events/smart-ranked called', { limit });
+    const offsetParam = parseInt(url.searchParams.get('offset') || '0', 10);
+    const userId = url.searchParams.get('userId');
     
-    // Fetch upcoming and recently past events with favorites count
+    const limit = Number.isFinite(limitParam) ? Math.min(Math.max(limitParam, 1), 500) : 200;
+    const offset = Math.max(0, offsetParam);
+
+    console.log('[API] GET /api/events/smart-ranked', { limit, offset, userId });
+    
+    // Fetch events with minimal columns for performance
+    // Over-fetch to allow scoring + filtering full events
     const { data: events, error } = await supabaseAdmin
       .from('events')
       .select(`
-        *,
-        favorites:favorites(count)
+        id,
+        title,
+        description,
+        date,
+        place,
+        cover_url,
+        price,
+        isPaid,
+        capacity,
+        registered,
+        freefood,
+        category,
+        created_at,
+        likes:favorites(count)
       `)
-      // Include events from the last 30 days up to the future
       .gte('date', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
       .order('created_at', { ascending: false })
-      .limit(limit * 3); // over-fetch to allow scoring then trimming
+      .limit(limit * 3); // over-fetch to allow filtering
 
     if (error) throw error;
 
     if (!events || events.length === 0) {
-      return new Response(JSON.stringify({ events: [] }), { status: 200 });
+      return new Response(JSON.stringify({ events: [], total: 0 }), { status: 200 });
+    }
+
+    // Fetch user's favorites if userId provided
+    let userFavorites = new Set();
+    if (userId) {
+      const { data: favs, error: favError } = await supabaseAdmin
+        .from('favorites')
+        .select('event_id')
+        .eq('user_id', userId);
+      
+      if (!favError && favs) {
+        userFavorites = new Set(favs.map(f => f.event_id));
+      }
     }
 
     const now = new Date();
@@ -49,13 +79,13 @@ export async function GET(req) {
         if (hoursUntil < 24) imminenceScore = 10;
         else if (hoursUntil < 48) imminenceScore = 8;
         else if (hoursUntil < 72) imminenceScore = 6;
-        else if (hoursUntil < 168) imminenceScore = 4; // 1 week
+        else if (hoursUntil < 168) imminenceScore = 4;
         else imminenceScore = 2;
 
-        // Popularity score: more registered = higher (max 10 points)
+        // Popularity score
         const popularityScore = Math.min(10, (registered / 10) * 2);
 
-        // Fill rate score: 70-90% = hot (max 10 points)
+        // Fill rate score
         const fillRate = capacity > 0 ? (registered / capacity) * 100 : 0;
         let fillRateScore = 0;
         if (fillRate >= 70 && fillRate < 90) fillRateScore = 10;
@@ -63,53 +93,50 @@ export async function GET(req) {
         else if (fillRate >= 30 && fillRate < 50) fillRateScore = 3;
         else fillRateScore = 1;
 
-        // Likes score (favorites count)
-        const likesCount = ev.favorites?.[0]?.count || 0;
+        // Likes score
+        const likesCount = ev.likes?.[0]?.count || 0;
         const likesScore = Math.min(10, likesCount * 0.5);
 
-        // Recency score (recently created events get a short boost)
+        // Recency score
         const createdAt = ev.created_at ? new Date(ev.created_at) : now;
         const hoursSinceCreated = (now - createdAt) / (1000 * 60 * 60);
         let recencyScore = 0;
         if (hoursSinceCreated < 24) recencyScore = 6;
         else if (hoursSinceCreated < 72) recencyScore = 5;
         else if (hoursSinceCreated < 168) recencyScore = 3;
-        else if (hoursSinceCreated < 720) recencyScore = 1; // < 30 jours
+        else if (hoursSinceCreated < 720) recencyScore = 1;
 
-        // Total score with weighted factors
+        // Total score
         const score =
-          imminenceScore * 3 +   // Imminence weight: 3x
-          popularityScore * 2 +   // Popularity weight: 2x
-          fillRateScore * 1.5 +   // Fill rate weight: 1.5x
-          likesScore * 1 +        // Likes weight: 1x
-          recencyScore * 1.2;     // Recency weight: 1.2x
+          imminenceScore * 3 +
+          popularityScore * 2 +
+          fillRateScore * 1.5 +
+          likesScore * 1 +
+          recencyScore * 1.2;
 
         return {
           ...ev,
           likes_count: likesCount,
+          isFavorited: userFavorites.has(ev.id),
           score,
-          _debug: {
-            imminenceScore,
-            popularityScore,
-            fillRateScore,
-            likesScore,
-            recencyScore,
-            hoursUntil: Math.round(hoursUntil),
-            fillRate: Math.round(fillRate),
-            hoursSinceCreated: Math.round(hoursSinceCreated),
-          },
         };
       })
-      .filter((ev) => ev !== null) // Remove full events
-      .sort((a, b) => b.score - a.score) // Sort by score desc
-      .slice(0, limit); // Trim to requested limit
+      .filter((ev) => ev !== null)
+      .sort((a, b) => b.score - a.score);
+    
+    // Apply offset/limit pagination
+    const total = scoredEvents.length;
+    const paginatedEvents = scoredEvents.slice(offset, offset + limit);
 
-    // Remove debug info before returning
-    const cleanedEvents = scoredEvents.map(({ _debug, ...ev }) => ev);
-
-    return new Response(JSON.stringify({ events: cleanedEvents }), { status: 200 });
+    return new Response(JSON.stringify({ 
+      events: paginatedEvents, 
+      total,
+      limit,
+      offset,
+      hasMore: offset + limit < total
+    }), { status: 200 });
   } catch (err) {
     console.error('GET /api/events/smart-ranked error', err);
-    return new Response(JSON.stringify({ error: err.message, events: [] }), { status: 200 });
+    return new Response(JSON.stringify({ error: err.message, events: [], total: 0 }), { status: 200 });
   }
 }

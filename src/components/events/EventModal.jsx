@@ -4,10 +4,26 @@ import { jsPDF } from 'jspdf';
 import QRCode from 'qrcode';
 import formatDate from '@/utils/formatDate';
 
-export default function EventModal({ event, onClose }) {
+export default function EventModal({ event, onClose, onRegistrationSuccess }) {
   const [joining, setJoining] = useState(false);
   const [form, setForm] = useState({ name: '', email: '', count: 1 });
   if (!event) return null;
+
+  // Validate and fix image URL (only cover_url exists now)
+  const getValidImageUrl = () => {
+    if (!event.cover_url) {
+      return 'https://via.placeholder.com/600x400?text=Event';
+    }
+    
+    // Check if URL is valid
+    if (event.cover_url.startsWith('http://') || event.cover_url.startsWith('https://') || event.cover_url.startsWith('/')) {
+      return event.cover_url;
+    }
+    
+    return 'https://via.placeholder.com/600x400?text=Event';
+  };
+
+  const imageUrl = getValidImageUrl();
 
   const placesRemaining = (event.capacity || 0) - (event.registered || 0);
   const placesFilled = event.capacity > 0 ? Math.round(((event.registered || 0) / event.capacity) * 100) : 0;
@@ -58,6 +74,12 @@ export default function EventModal({ event, onClose }) {
       if (j.success && j.registration) {
         await generatePDF(j.registration);
         alert('Inscription confirmée. Votre ticket PDF a été généré et téléchargé.');
+        
+        // Notify parent to refresh data
+        if (onRegistrationSuccess) {
+          onRegistrationSuccess();
+        }
+        
         onClose();
       } else {
         throw new Error('Réponse serveur invalide');
@@ -88,15 +110,16 @@ export default function EventModal({ event, onClose }) {
           {/* Left Column - Image & Details */}
           <div className="flex-1 lg:flex-[1.2] flex flex-col gap-6">
             {/* Large Image */}
-            {event.cover_url && (
-              <div className="w-full rounded-lg overflow-hidden bg-[#0b0b0b] flex-shrink-0">
-                <img 
-                  src={event.cover_url} 
-                  alt={event.title} 
-                  className="w-full h-64 lg:h-80 object-cover"
-                />
-              </div>
-            )}
+            <div className="w-full rounded-lg overflow-hidden bg-[#0b0b0b] flex-shrink-0">
+              <img 
+                src={imageUrl} 
+                alt={event.title} 
+                className="w-full h-64 lg:h-80 object-cover"
+                onError={(e) => {
+                  e.target.src = 'https://via.placeholder.com/600x400?text=Event';
+                }}
+              />
+            </div>
 
             {/* Description */}
             <div>
