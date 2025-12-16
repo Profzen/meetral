@@ -1,15 +1,6 @@
 ﻿// src/server/api/admin/events/route.js
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
 
-/**
- * Admin endpoints:
- * - GET: liste complète
- * - PATCH: éditer event (body doit contenir id + fields)
- * - DELETE: supprimer event (body { id })
- *
- * Nécessite Authorization: Bearer <access_token> d'un user avec role 'admin'
- */
-
 async function checkAdmin(token) {
   if (!token) throw new Error('Missing token');
   const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
@@ -41,7 +32,7 @@ export async function GET(req) {
     if (error) throw error;
     return new Response(JSON.stringify({ events: data }), { status: 200 });
   } catch (err) {
-    console.error(err);
+    console.error('GET /api/admin/events error', err);
     const status = err.message === 'Not an admin' ? 403 : 401;
     return new Response(JSON.stringify({ error: err.message }), { status });
   }
@@ -67,7 +58,7 @@ export async function PATCH(req) {
     if (error) throw error;
     return new Response(JSON.stringify({ event: data }), { status: 200 });
   } catch (err) {
-    console.error(err);
+    console.error('PATCH /api/admin/events error', err);
     const status = err.message === 'Not an admin' ? 403 : 401;
     return new Response(JSON.stringify({ error: err.message }), { status });
   }
@@ -93,7 +84,7 @@ export async function DELETE(req) {
     if (error) throw error;
     return new Response(JSON.stringify({ deleted: data }), { status: 200 });
   } catch (err) {
-    console.error(err);
+    console.error('DELETE /api/admin/events error', err);
     const status = err.message === 'Not an admin' ? 403 : 401;
     return new Response(JSON.stringify({ error: err.message }), { status });
   }

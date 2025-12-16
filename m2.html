@@ -1,0 +1,1422 @@
+<!DOCTYPE html>
+<html lang="fr" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Découvrir les événements - Meetral</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'electric-blue': '#007BFF',
+                        'mint-green': '#3CD070',
+                        'light-gray': '#F5F7FA',
+                        'dark-gray': '#333333'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            box-sizing: border-box;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #007BFF 0%, #3CD070 100%);
+        }
+        
+        .card-hover {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 123, 255, 0.15);
+        }
+        
+        .freefood-badge {
+            background: linear-gradient(45deg, #3CD070, #00D4AA);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+        
+        .filter-active {
+            background-color: #007BFF;
+            color: white;
+        }
+        
+        .event-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        
+        .price-tag {
+            background: linear-gradient(45deg, #007BFF, #0056b3);
+        }
+        
+        .free-tag {
+            background: linear-gradient(45deg, #3CD070, #28a745);
+        }
+    </style>
+</head>
+<body class="bg-light-gray">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg fixed w-full top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <button onclick="showSection('home')" class="text-2xl font-bold text-electric-blue cursor-pointer">Meetral</button>
+                    <span class="ml-2 freefood-badge text-white px-3 py-1 rounded-full text-sm font-semibold">FreeFood</span>
+                </div>
+                <div class="hidden md:flex space-x-8">
+                    <button onclick="showSection('home')" class="nav-link text-dark-gray hover:text-electric-blue transition-colors">Accueil</button>
+                    <button onclick="showSection('events')" class="nav-link text-electric-blue font-medium">Événements</button>
+                    <button onclick="showSection('create')" class="nav-link text-dark-gray hover:text-electric-blue transition-colors">Créer</button>
+                </div>
+                <div class="flex space-x-4">
+                    <button onclick="openModal('loginModal')" class="text-electric-blue hover:text-blue-700 font-medium">Connexion</button>
+                    <button onclick="openModal('signupModal')" class="bg-electric-blue text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">S'inscrire</button>
+                </div>
+                <!-- Mobile menu button -->
+                <div class="md:hidden">
+                    <button onclick="toggleMobileMenu()" class="text-dark-gray hover:text-electric-blue">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <!-- Mobile menu -->
+            <div id="mobileMenu" class="hidden md:hidden pb-4">
+                <button onclick="showSection('home')" class="block w-full text-left py-2 text-dark-gray hover:text-electric-blue">Accueil</button>
+                <button onclick="showSection('events')" class="block w-full text-left py-2 text-dark-gray hover:text-electric-blue">Événements</button>
+                <button onclick="showSection('create')" class="block w-full text-left py-2 text-dark-gray hover:text-electric-blue">Créer</button>
+                <button onclick="openModal('loginModal')" class="block w-full text-left py-2 text-electric-blue">Connexion</button>
+                <button onclick="openModal('signupModal')" class="block w-full text-left py-2 bg-electric-blue text-white rounded mt-2 px-4">S'inscrire</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Home Section -->
+    <section id="homeSection" class="section-content">
+        <!-- Hero Section -->
+        <section class="gradient-bg text-white pt-24 pb-20">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center hero-animation">
+                    <h1 class="text-5xl md:text-6xl font-bold mb-6">
+                        L'événementiel <br>
+                        <span class="text-mint-green">réinventé</span>
+                    </h1>
+                    <p class="text-xl md:text-2xl mb-8 max-w-3xl mx-auto opacity-90">
+                        Créez, découvrez et participez aux meilleurs événements près de chez vous. 
+                        Avec le label <strong>FreeFood</strong>, trouvez les événements qui régalent !
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                        <button onclick="showSection('create')" class="bg-white text-electric-blue px-8 py-4 rounded-lg font-semibold text-lg hover:bg-gray-100 transition-colors">
+                            Créer un événement
+                        </button>
+                        <button onclick="showSection('events')" class="border-2 border-white text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-white hover:text-electric-blue transition-colors">
+                            Découvrir les événements
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section class="py-20 bg-light-gray">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-16">
+                    <h2 class="text-4xl font-bold mb-4">Pourquoi choisir Meetral ?</h2>
+                    <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+                        Une plateforme complète qui simplifie l'organisation et la découverte d'événements
+                    </p>
+                </div>
+                
+                <div class="grid md:grid-cols-3 gap-8">
+                    <div class="bg-white p-8 rounded-xl shadow-lg card-hover">
+                        <div class="w-16 h-16 bg-electric-blue rounded-lg flex items-center justify-center mb-6">
+                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-bold mb-4">Création simplifiée</h3>
+                        <p class="text-gray-600">Créez vos événements en quelques clics avec notre interface intuitive. Gérez la billetterie, les inscriptions et la communication automatiquement.</p>
+                    </div>
+
+                    <div class="bg-white p-8 rounded-xl shadow-lg card-hover">
+                        <div class="w-16 h-16 bg-mint-green rounded-lg flex items-center justify-center mb-6">
+                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-bold mb-4">Découverte locale</h3>
+                        <p class="text-gray-600">Trouvez les événements près de chez vous grâce à notre carte interactive. Filtrez par type, date et bien sûr par le label FreeFood !</p>
+                    </div>
+
+                    <div class="bg-white p-8 rounded-xl shadow-lg card-hover">
+                        <div class="w-16 h-16 bg-electric-blue rounded-lg flex items-center justify-center mb-6">
+                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-bold mb-4">Billetterie intégrée</h3>
+                        <p class="text-gray-600">Tickets numériques automatiques, validation QR code, gestion des paiements. Tout est inclus pour une expérience sans friction.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- FreeFood Section -->
+        <section class="py-20 bg-white">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex flex-col lg:flex-row items-center gap-12">
+                    <div class="lg:w-1/2">
+                        <div class="freefood-badge text-white px-6 py-3 rounded-full text-lg font-bold inline-block mb-6">
+                            🍕 FreeFood
+                        </div>
+                        <h2 class="text-4xl font-bold mb-6">Le label qui fait la différence</h2>
+                        <p class="text-xl text-gray-600 mb-8">
+                            Repérez instantanément les événements qui offrent une collation ! 
+                            Le label FreeFood devient viral et attire plus de participants à vos événements.
+                        </p>
+                        <ul class="space-y-4">
+                            <li class="flex items-center">
+                                <div class="w-6 h-6 bg-mint-green rounded-full flex items-center justify-center mr-4">
+                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                </div>
+                                <span class="text-lg">Augmente l'attractivité de vos événements</span>
+                            </li>
+                            <li class="flex items-center">
+                                <div class="w-6 h-6 bg-mint-green rounded-full flex items-center justify-center mr-4">
+                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                </div>
+                                <span class="text-lg">Crée un moment convivial mémorable</span>
+                            </li>
+                            <li class="flex items-center">
+                                <div class="w-6 h-6 bg-mint-green rounded-full flex items-center justify-center mr-4">
+                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                </div>
+                                <span class="text-lg">Facilite le networking et les échanges</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="lg:w-1/2">
+                        <div class="bg-gradient-to-br from-mint-green to-electric-blue p-8 rounded-2xl text-white">
+                            <div class="text-center">
+                                <div class="text-6xl mb-4">🎉</div>
+                                <h3 class="text-2xl font-bold mb-4">Événement avec FreeFood</h3>
+                                <p class="text-lg opacity-90 mb-6">Formation React.js + Pizza offerte</p>
+                                <div class="bg-white bg-opacity-20 rounded-lg p-4 mb-6">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <span>📅 Demain 18h30</span>
+                                        <span>📍 Paris 11e</span>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <span>👥 45/50 places</span>
+                                        <span class="freefood-badge px-3 py-1 rounded-full text-sm">FreeFood</span>
+                                    </div>
+                                </div>
+                                <button onclick="showSection('events')" class="bg-white text-electric-blue px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+                                    S'inscrire maintenant
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Section -->
+        <section class="py-20 gradient-bg text-white">
+            <div class="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
+                <h2 class="text-4xl font-bold mb-6">Prêt à révolutionner vos événements ?</h2>
+                <p class="text-xl mb-8 opacity-90">
+                    Rejoignez dès maintenant la communauté Meetral et découvrez une nouvelle façon d'organiser et de participer aux événements.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <button onclick="openModal('signupModal')" class="bg-white text-electric-blue px-8 py-4 rounded-lg font-semibold text-lg hover:bg-gray-100 transition-colors">
+                        Commencer gratuitement
+                    </button>
+                    <button onclick="openModal('demoModal')" class="border-2 border-white text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-white hover:text-electric-blue transition-colors">
+                        Voir la démo
+                    </button>
+                </div>
+            </div>
+        </section>
+    </section>
+
+    <!-- Events Section -->
+    <section id="eventsSection" class="section-content hidden">
+        <!-- Header Section -->
+        <section class="pt-24 pb-8 bg-white">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-8">
+                    <h1 class="text-4xl font-bold text-dark-gray mb-4">Découvrir les événements</h1>
+                    <p class="text-xl text-gray-600">Trouvez l'événement parfait près de chez vous</p>
+                </div>
+                
+                <!-- Search Bar -->
+                <div class="max-w-2xl mx-auto">
+                    <div class="relative">
+                        <input type="text" id="searchInput" placeholder="Rechercher un événement, un lieu, un organisateur..." 
+                               class="w-full px-6 py-4 text-lg border-2 border-gray-200 rounded-xl focus:border-electric-blue focus:outline-none">
+                        <button class="absolute right-3 top-1/2 transform -translate-y-1/2 bg-electric-blue text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    <!-- Filters Section -->
+    <section class="bg-white border-b border-gray-200 sticky top-16 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex flex-wrap gap-4 items-center justify-between">
+                <!-- Filter Buttons -->
+                <div class="flex flex-wrap gap-3">
+                    <button class="filter-btn px-4 py-2 rounded-full border border-gray-300 hover:border-electric-blue transition-colors" data-filter="all">
+                        Tous les événements
+                    </button>
+                    <button class="filter-btn freefood-badge text-white px-4 py-2 rounded-full font-semibold" data-filter="freefood">
+                        🍕 FreeFood
+                    </button>
+                    <button class="filter-btn px-4 py-2 rounded-full border border-gray-300 hover:border-electric-blue transition-colors" data-filter="free">
+                        Gratuit
+                    </button>
+                    <button class="filter-btn px-4 py-2 rounded-full border border-gray-300 hover:border-electric-blue transition-colors" data-filter="today">
+                        Aujourd'hui
+                    </button>
+                    <button class="filter-btn px-4 py-2 rounded-full border border-gray-300 hover:border-electric-blue transition-colors" data-filter="weekend">
+                        Ce week-end
+                    </button>
+                </div>
+                
+                <!-- Advanced Filters Toggle -->
+                <button id="advancedFiltersBtn" class="text-electric-blue hover:text-blue-700 font-medium flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4"></path>
+                    </svg>
+                    Filtres avancés
+                </button>
+            </div>
+            
+            <!-- Advanced Filters Panel -->
+            <div id="advancedFilters" class="hidden mt-4 p-6 bg-light-gray rounded-xl">
+                <div class="grid md:grid-cols-4 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Date</label>
+                        <select class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-electric-blue focus:outline-none">
+                            <option>Toutes les dates</option>
+                            <option>Aujourd'hui</option>
+                            <option>Demain</option>
+                            <option>Cette semaine</option>
+                            <option>Ce mois</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Lieu</label>
+                        <input type="text" placeholder="Ville, code postal..." 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-electric-blue focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Catégorie</label>
+                        <select class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-electric-blue focus:outline-none">
+                            <option>Toutes catégories</option>
+                            <option>Formation</option>
+                            <option>Networking</option>
+                            <option>Culturel</option>
+                            <option>Lancement</option>
+                            <option>Webinaire</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Prix</label>
+                        <select class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-electric-blue focus:outline-none">
+                            <option>Tous les prix</option>
+                            <option>Gratuit</option>
+                            <option>Moins de 20€</option>
+                            <option>20€ - 50€</option>
+                            <option>Plus de 50€</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex justify-end mt-4 space-x-3">
+                    <button class="px-4 py-2 text-gray-600 hover:text-gray-800">Réinitialiser</button>
+                    <button class="px-6 py-2 bg-electric-blue text-white rounded-lg hover:bg-blue-700 transition-colors">Appliquer</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Results Section -->
+    <section class="py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Results Header -->
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <p class="text-gray-600"><span id="resultsCount">247</span> événements trouvés</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-sm text-gray-600">Trier par:</span>
+                    <select class="px-3 py-2 border border-gray-300 rounded-lg focus:border-electric-blue focus:outline-none">
+                        <option>Date (plus proche)</option>
+                        <option>Date (plus lointaine)</option>
+                        <option>Prix (croissant)</option>
+                        <option>Prix (décroissant)</option>
+                        <option>Popularité</option>
+                    </select>
+                    <div class="flex border border-gray-300 rounded-lg">
+                        <button id="gridView" class="p-2 bg-electric-blue text-white rounded-l-lg">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
+                            </svg>
+                        </button>
+                        <button id="listView" class="p-2 text-gray-600 hover:bg-gray-100 rounded-r-lg">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Events Grid -->
+            <div id="eventsGrid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Event Card 1 -->
+                <div class="event-card card-hover">
+                    <div class="relative">
+                        <div class="h-48 bg-gradient-to-br from-electric-blue to-mint-green"></div>
+                        <div class="absolute top-4 left-4">
+                            <span class="freefood-badge text-white px-3 py-1 rounded-full text-sm font-semibold">🍕 FreeFood</span>
+                        </div>
+                        <div class="absolute top-4 right-4">
+                            <span class="free-tag text-white px-3 py-1 rounded-full text-sm font-semibold">Gratuit</span>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-center text-sm text-gray-500 mb-2">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            Demain 18h30
+                            <svg class="w-4 h-4 ml-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                            </svg>
+                            Paris 11e
+                        </div>
+                        <h3 class="text-xl font-bold text-dark-gray mb-2">Formation React.js pour débutants</h3>
+                        <p class="text-gray-600 mb-4">Apprenez les bases de React.js dans une ambiance conviviale avec pizza offerte !</p>
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center text-sm text-gray-500">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                                </svg>
+                                45/50 places
+                            </div>
+                            <button class="bg-electric-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                                S'inscrire
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Event Card 2 -->
+                <div class="event-card card-hover">
+                    <div class="relative">
+                        <div class="h-48 bg-gradient-to-br from-purple-500 to-pink-500"></div>
+                        <div class="absolute top-4 right-4">
+                            <span class="price-tag text-white px-3 py-1 rounded-full text-sm font-semibold">25€</span>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-center text-sm text-gray-500 mb-2">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            Samedi 14h00
+                            <svg class="w-4 h-4 ml-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                            </svg>
+                            Lyon 2e
+                        </div>
+                        <h3 class="text-xl font-bold text-dark-gray mb-2">Atelier Design Thinking</h3>
+                        <p class="text-gray-600 mb-4">Découvrez les méthodes du design thinking pour innover dans vos projets.</p>
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center text-sm text-gray-500">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                                </svg>
+                                12/20 places
+                            </div>
+                            <button class="bg-electric-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                                Réserver
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Event Card 3 -->
+                <div class="event-card card-hover">
+                    <div class="relative">
+                        <div class="h-48 bg-gradient-to-br from-green-500 to-teal-500"></div>
+                        <div class="absolute top-4 left-4">
+                            <span class="freefood-badge text-white px-3 py-1 rounded-full text-sm font-semibold">🥪 FreeFood</span>
+                        </div>
+                        <div class="absolute top-4 right-4">
+                            <span class="free-tag text-white px-3 py-1 rounded-full text-sm font-semibold">Gratuit</span>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-center text-sm text-gray-500 mb-2">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            Vendredi 12h00
+                            <svg class="w-4 h-4 ml-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                            </svg>
+                            Marseille
+                        </div>
+                        <h3 class="text-xl font-bold text-dark-gray mb-2">Networking Startup</h3>
+                        <p class="text-gray-600 mb-4">Rencontrez d'autres entrepreneurs autour d'un déjeuner networking.</p>
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center text-sm text-gray-500">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                                </svg>
+                                28/30 places
+                            </div>
+                            <button class="bg-electric-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                                S'inscrire
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Event Card 4 -->
+                <div class="event-card card-hover">
+                    <div class="relative">
+                        <div class="h-48 bg-gradient-to-br from-orange-500 to-red-500"></div>
+                        <div class="absolute top-4 right-4">
+                            <span class="price-tag text-white px-3 py-1 rounded-full text-sm font-semibold">15€</span>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-center text-sm text-gray-500 mb-2">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            Dimanche 10h00
+                            <svg class="w-4 h-4 ml-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                            </svg>
+                            Toulouse
+                        </div>
+                        <h3 class="text-xl font-bold text-dark-gray mb-2">Conférence IA & Futur</h3>
+                        <p class="text-gray-600 mb-4">Explorez les dernières avancées en intelligence artificielle.</p>
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center text-sm text-gray-500">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                                </svg>
+                                89/100 places
+                            </div>
+                            <button class="bg-electric-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                                Réserver
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Event Card 5 -->
+                <div class="event-card card-hover">
+                    <div class="relative">
+                        <div class="h-48 bg-gradient-to-br from-indigo-500 to-purple-600"></div>
+                        <div class="absolute top-4 left-4">
+                            <span class="freefood-badge text-white px-3 py-1 rounded-full text-sm font-semibold">🍰 FreeFood</span>
+                        </div>
+                        <div class="absolute top-4 right-4">
+                            <span class="price-tag text-white px-3 py-1 rounded-full text-sm font-semibold">35€</span>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-center text-sm text-gray-500 mb-2">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            Lundi 19h00
+                            <svg class="w-4 h-4 ml-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                            </svg>
+                            Bordeaux
+                        </div>
+                        <h3 class="text-xl font-bold text-dark-gray mb-2">Masterclass Marketing Digital</h3>
+                        <p class="text-gray-600 mb-4">Stratégies avancées de marketing digital avec cocktail de clôture.</p>
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center text-sm text-gray-500">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                                </svg>
+                                15/25 places
+                            </div>
+                            <button class="bg-electric-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                                Réserver
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Event Card 6 -->
+                <div class="event-card card-hover">
+                    <div class="relative">
+                        <div class="h-48 bg-gradient-to-br from-teal-500 to-cyan-500"></div>
+                        <div class="absolute top-4 right-4">
+                            <span class="free-tag text-white px-3 py-1 rounded-full text-sm font-semibold">Gratuit</span>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-center text-sm text-gray-500 mb-2">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            Mercredi 14h30
+                            <svg class="w-4 h-4 ml-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                            </svg>
+                            En ligne
+                        </div>
+                        <h3 class="text-xl font-bold text-dark-gray mb-2">Webinaire Cybersécurité</h3>
+                        <p class="text-gray-600 mb-4">Les bonnes pratiques de sécurité informatique pour les entreprises.</p>
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center text-sm text-gray-500">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                                </svg>
+                                156/200 places
+                            </div>
+                            <button class="bg-electric-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                                S'inscrire
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Load More Button -->
+            <div class="text-center mt-12">
+                <button class="bg-white border-2 border-electric-blue text-electric-blue px-8 py-3 rounded-lg hover:bg-electric-blue hover:text-white transition-colors font-medium">
+                    Charger plus d'événements
+                </button>
+            </div>
+        </div>
+    </section>
+    </section>
+
+    <!-- Create Event Section -->
+    <section id="createSection" class="section-content hidden">
+        <div class="pt-24 pb-20 bg-light-gray min-h-full">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12">
+                    <h1 class="text-4xl font-bold text-dark-gray mb-4">Créer un événement</h1>
+                    <p class="text-xl text-gray-600">Partagez votre passion avec la communauté</p>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-xl p-8">
+                    <form id="createEventForm" class="space-y-8">
+                        <!-- Basic Information -->
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Titre de l'événement *</label>
+                                <input type="text" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-electric-blue focus:outline-none" placeholder="Ex: Formation React.js pour débutants">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Catégorie *</label>
+                                <select required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-electric-blue focus:outline-none">
+                                    <option value="">Choisir une catégorie</option>
+                                    <option value="formation">Formation</option>
+                                    <option value="networking">Networking</option>
+                                    <option value="culturel">Culturel</option>
+                                    <option value="lancement">Lancement produit</option>
+                                    <option value="webinaire">Webinaire</option>
+                                    <option value="autre">Autre</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Description -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Description *</label>
+                            <textarea required rows="4" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-electric-blue focus:outline-none" placeholder="Décrivez votre événement, le programme, les objectifs..."></textarea>
+                        </div>
+
+                        <!-- Date and Time -->
+                        <div class="grid md:grid-cols-3 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Date *</label>
+                                <input type="date" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-electric-blue focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Heure de début *</label>
+                                <input type="time" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-electric-blue focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Durée (heures)</label>
+                                <input type="number" min="0.5" step="0.5" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-electric-blue focus:outline-none" placeholder="2">
+                            </div>
+                        </div>
+
+                        <!-- Location -->
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Type de lieu *</label>
+                                <select required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-electric-blue focus:outline-none" onchange="toggleLocationFields(this.value)">
+                                    <option value="">Choisir le type</option>
+                                    <option value="physical">Lieu physique</option>
+                                    <option value="online">En ligne</option>
+                                    <option value="hybrid">Hybride</option>
+                                </select>
+                            </div>
+                            <div id="physicalLocation" class="hidden">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Adresse</label>
+                                <input type="text" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-electric-blue focus:outline-none" placeholder="123 Rue de la Paix, 75001 Paris">
+                            </div>
+                        </div>
+
+                        <!-- Capacity and Pricing -->
+                        <div class="grid md:grid-cols-3 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Capacité maximale</label>
+                                <input type="number" min="1" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-electric-blue focus:outline-none" placeholder="50">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Type de tarif *</label>
+                                <select required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-electric-blue focus:outline-none" onchange="togglePriceField(this.value)">
+                                    <option value="">Choisir</option>
+                                    <option value="free">Gratuit</option>
+                                    <option value="paid">Payant</option>
+                                </select>
+                            </div>
+                            <div id="priceField" class="hidden">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Prix (€)</label>
+                                <input type="number" min="0" step="0.01" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-electric-blue focus:outline-none" placeholder="25.00">
+                            </div>
+                        </div>
+
+                        <!-- FreeFood Section -->
+                        <div class="bg-gradient-to-r from-mint-green to-electric-blue p-6 rounded-xl text-white">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h3 class="text-xl font-bold mb-2">🍕 Label FreeFood</h3>
+                                    <p class="opacity-90">Offrez-vous une collation pendant l'événement ? Activez le label FreeFood pour attirer plus de participants !</p>
+                                </div>
+                                <div class="ml-6">
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" id="freeFoodToggle" class="sr-only peer">
+                                        <div class="w-14 h-7 bg-white bg-opacity-30 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-white peer-checked:bg-opacity-50"></div>
+                                    </label>
+                                </div>
+                            </div>
+                            <div id="freeFoodDetails" class="hidden mt-4">
+                                <label class="block text-sm font-medium mb-2">Type de collation</label>
+                                <input type="text" class="w-full px-4 py-3 border border-white border-opacity-30 rounded-lg bg-white bg-opacity-20 text-white placeholder-white placeholder-opacity-70 focus:outline-none focus:bg-opacity-30" placeholder="Ex: Pizza, sandwichs, pâtisseries...">
+                            </div>
+                        </div>
+
+                        <!-- Additional Options -->
+                        <div class="space-y-4">
+                            <h3 class="text-lg font-semibold text-gray-800">Options supplémentaires</h3>
+                            <div class="grid md:grid-cols-2 gap-4">
+                                <label class="flex items-center">
+                                    <input type="checkbox" class="w-5 h-5 text-electric-blue border-gray-300 rounded focus:ring-electric-blue">
+                                    <span class="ml-3 text-gray-700">Inscription avec validation manuelle</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" class="w-5 h-5 text-electric-blue border-gray-300 rounded focus:ring-electric-blue">
+                                    <span class="ml-3 text-gray-700">Envoyer des rappels automatiques</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" class="w-5 h-5 text-electric-blue border-gray-300 rounded focus:ring-electric-blue">
+                                    <span class="ml-3 text-gray-700">Permettre les questions des participants</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" class="w-5 h-5 text-electric-blue border-gray-300 rounded focus:ring-electric-blue">
+                                    <span class="ml-3 text-gray-700">Créer un chat pour l'événement</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Submit Buttons -->
+                        <div class="flex flex-col sm:flex-row gap-4 pt-6">
+                            <button type="button" onclick="showSection('events')" class="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:border-gray-400 transition-colors">
+                                Annuler
+                            </button>
+                            <button type="button" onclick="saveAsDraft()" class="flex-1 px-6 py-3 border-2 border-electric-blue text-electric-blue rounded-lg hover:bg-electric-blue hover:text-white transition-colors">
+                                Sauvegarder en brouillon
+                            </button>
+                            <button type="submit" class="flex-1 px-6 py-3 bg-electric-blue text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold">
+                                Publier l'événement
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Modals -->
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-dark-gray">Connexion</h2>
+                <button onclick="closeModal('loginModal')" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <form id="loginForm" class="space-y-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <input type="email" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-electric-blue focus:outline-none" placeholder="votre@email.com">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Mot de passe</label>
+                    <input type="password" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-electric-blue focus:outline-none" placeholder="••••••••">
+                </div>
+                <div class="flex items-center justify-between">
+                    <label class="flex items-center">
+                        <input type="checkbox" class="w-4 h-4 text-electric-blue border-gray-300 rounded">
+                        <span class="ml-2 text-sm text-gray-600">Se souvenir de moi</span>
+                    </label>
+                    <button type="button" onclick="openModal('forgotPasswordModal'); closeModal('loginModal')" class="text-sm text-electric-blue hover:text-blue-700">
+                        Mot de passe oublié ?
+                    </button>
+                </div>
+                <button type="submit" class="w-full bg-electric-blue text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold">
+                    Se connecter
+                </button>
+                <div class="text-center">
+                    <span class="text-gray-600">Pas encore de compte ? </span>
+                    <button type="button" onclick="openModal('signupModal'); closeModal('loginModal')" class="text-electric-blue hover:text-blue-700 font-medium">
+                        S'inscrire
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Signup Modal -->
+    <div id="signupModal" class="modal fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-dark-gray">Créer un compte</h2>
+                <button onclick="closeModal('signupModal')" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <form id="signupForm" class="space-y-6">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Prénom</label>
+                        <input type="text" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-electric-blue focus:outline-none" placeholder="Jean">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Nom</label>
+                        <input type="text" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-electric-blue focus:outline-none" placeholder="Dupont">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <input type="email" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-electric-blue focus:outline-none" placeholder="jean.dupont@email.com">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Mot de passe</label>
+                    <input type="password" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-electric-blue focus:outline-none" placeholder="••••••••">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Confirmer le mot de passe</label>
+                    <input type="password" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-electric-blue focus:outline-none" placeholder="••••••••">
+                </div>
+                <div>
+                    <label class="flex items-start">
+                        <input type="checkbox" required class="w-4 h-4 text-electric-blue border-gray-300 rounded mt-1">
+                        <span class="ml-2 text-sm text-gray-600">
+                            J'accepte les <a href="#" class="text-electric-blue hover:text-blue-700">conditions d'utilisation</a> 
+                            et la <a href="#" class="text-electric-blue hover:text-blue-700">politique de confidentialité</a>
+                        </span>
+                    </label>
+                </div>
+                <button type="submit" class="w-full bg-electric-blue text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold">
+                    Créer mon compte
+                </button>
+                <div class="text-center">
+                    <span class="text-gray-600">Déjà un compte ? </span>
+                    <button type="button" onclick="openModal('loginModal'); closeModal('signupModal')" class="text-electric-blue hover:text-blue-700 font-medium">
+                        Se connecter
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Forgot Password Modal -->
+    <div id="forgotPasswordModal" class="modal fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-dark-gray">Mot de passe oublié</h2>
+                <button onclick="closeModal('forgotPasswordModal')" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-electric-blue bg-opacity-10 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-electric-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                    </svg>
+                </div>
+                <p class="text-gray-600">Entrez votre adresse email et nous vous enverrons un lien pour réinitialiser votre mot de passe.</p>
+            </div>
+            <form id="forgotPasswordForm" class="space-y-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <input type="email" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-electric-blue focus:outline-none" placeholder="votre@email.com">
+                </div>
+                <button type="submit" class="w-full bg-electric-blue text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold">
+                    Envoyer le lien de réinitialisation
+                </button>
+                <div class="text-center">
+                    <button type="button" onclick="openModal('loginModal'); closeModal('forgotPasswordModal')" class="text-electric-blue hover:text-blue-700 font-medium">
+                        Retour à la connexion
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Demo Modal -->
+    <div id="demoModal" class="modal fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-2xl p-8 max-w-2xl w-full mx-4">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-dark-gray">Découvrir Meetral en vidéo</h2>
+                <button onclick="closeModal('demoModal')" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="aspect-video bg-gradient-to-br from-electric-blue to-mint-green rounded-xl flex items-center justify-center mb-6">
+                <div class="text-center text-white">
+                    <div class="w-20 h-20 bg-white bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Vidéo de démonstration</h3>
+                    <p class="opacity-90">Découvrez toutes les fonctionnalités de Meetral en 3 minutes</p>
+                </div>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-4">
+                <button onclick="closeModal('demoModal')" class="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:border-gray-400 transition-colors">
+                    Fermer
+                </button>
+                <button onclick="openModal('signupModal'); closeModal('demoModal')" class="flex-1 px-6 py-3 bg-electric-blue text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold">
+                    Commencer maintenant
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="successModal" class="modal fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4">
+            <div class="text-center">
+                <div class="w-16 h-16 bg-mint-green rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-bold text-dark-gray mb-4">Succès !</h2>
+                <p id="successMessage" class="text-gray-600 mb-6">Votre action a été effectuée avec succès.</p>
+                <button onclick="closeModal('successModal')" class="w-full bg-electric-blue text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold">
+                    Continuer
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Event Registration Modal -->
+    <div id="eventRegistrationModal" class="modal fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-dark-gray">S'inscrire à l'événement</h2>
+                <button onclick="closeModal('eventRegistrationModal')" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div id="eventDetails" class="mb-6">
+                <div class="bg-light-gray p-4 rounded-lg mb-4">
+                    <h3 id="eventTitle" class="font-bold text-lg mb-2">Formation React.js pour débutants</h3>
+                    <div class="space-y-2 text-sm text-gray-600">
+                        <div class="flex items-center">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            <span id="eventDate">Demain 18h30</span>
+                        </div>
+                        <div class="flex items-center">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                            </svg>
+                            <span id="eventLocation">Paris 11e</span>
+                        </div>
+                        <div class="flex items-center">
+                            <span class="freefood-badge text-white px-2 py-1 rounded text-xs">🍕 FreeFood</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <form id="eventRegistrationForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Nom complet</label>
+                    <input type="text" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-electric-blue focus:outline-none" placeholder="Jean Dupont">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <input type="email" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-electric-blue focus:outline-none" placeholder="jean.dupont@email.com">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Téléphone (optionnel)</label>
+                    <input type="tel" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-electric-blue focus:outline-none" placeholder="06 12 34 56 78">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Questions ou commentaires (optionnel)</label>
+                    <textarea rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-electric-blue focus:outline-none" placeholder="Avez-vous des questions particulières ?"></textarea>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-3 pt-4">
+                    <button type="button" onclick="closeModal('eventRegistrationModal')" class="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:border-gray-400 transition-colors">
+                        Annuler
+                    </button>
+                    <button type="submit" class="flex-1 px-6 py-3 bg-electric-blue text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold">
+                        Confirmer l'inscription
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-dark-gray text-white py-12 mt-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-8">
+                <div>
+                    <div class="text-2xl font-bold text-electric-blue mb-4">Meetral</div>
+                    <p class="text-gray-400">La plateforme événementielle nouvelle génération avec le label FreeFood.</p>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-4">Produit</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="#" class="hover:text-white transition-colors">Fonctionnalités</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Tarifs</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">API</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-4">Support</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="#" class="hover:text-white transition-colors">Centre d'aide</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Contact</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Statut</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-4">Légal</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="#" class="hover:text-white transition-colors">Confidentialité</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">CGU</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">RGPD</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-8 pt-8 text-center text-gray-400">
+                <p>&copy; 2024 Meetral. Tous droits réservés.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Global state
+        let currentSection = 'home';
+
+        // Section Navigation
+        function showSection(sectionName) {
+            // Hide all sections
+            document.querySelectorAll('.section-content').forEach(section => {
+                section.classList.add('hidden');
+            });
+            
+            // Show selected section
+            const targetSection = document.getElementById(sectionName + 'Section');
+            if (targetSection) {
+                targetSection.classList.remove('hidden');
+                currentSection = sectionName;
+                
+                // Update navigation active states
+                updateNavigation(sectionName);
+                
+                // Scroll to top
+                window.scrollTo(0, 0);
+            }
+        }
+
+        function updateNavigation(activeSection) {
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('text-electric-blue', 'font-medium');
+                link.classList.add('text-dark-gray');
+            });
+            
+            // Find and activate the correct nav link
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(link => {
+                const onclick = link.getAttribute('onclick');
+                if (onclick && onclick.includes(activeSection)) {
+                    link.classList.add('text-electric-blue', 'font-medium');
+                    link.classList.remove('text-dark-gray');
+                }
+            });
+        }
+
+        // Mobile menu toggle
+        function toggleMobileMenu() {
+            const mobileMenu = document.getElementById('mobileMenu');
+            mobileMenu.classList.toggle('hidden');
+        }
+
+        // Modal Functions
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        // Close modal when clicking outside
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('modal')) {
+                const modalId = e.target.id;
+                closeModal(modalId);
+            }
+        });
+
+        // Form Handlers
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const email = this.querySelector('input[type="email"]').value;
+            const password = this.querySelector('input[type="password"]').value;
+            
+            // Simulate login
+            setTimeout(() => {
+                closeModal('loginModal');
+                showSuccessMessage('Connexion réussie ! Bienvenue sur Meetral.');
+            }, 1000);
+        });
+
+        document.getElementById('signupForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            
+            // Simulate signup
+            setTimeout(() => {
+                closeModal('signupModal');
+                showSuccessMessage('Compte créé avec succès ! Vous pouvez maintenant vous connecter.');
+            }, 1000);
+        });
+
+        document.getElementById('forgotPasswordForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const email = this.querySelector('input[type="email"]').value;
+            
+            // Simulate password reset
+            setTimeout(() => {
+                closeModal('forgotPasswordModal');
+                showSuccessMessage('Un email de réinitialisation a été envoyé à ' + email);
+            }, 1000);
+        });
+
+        document.getElementById('createEventForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const title = this.querySelector('input[type="text"]').value;
+            
+            // Simulate event creation
+            setTimeout(() => {
+                showSuccessMessage('Événement "' + title + '" créé avec succès !');
+                showSection('events');
+            }, 1000);
+        });
+
+        document.getElementById('eventRegistrationForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const name = this.querySelector('input[type="text"]').value;
+            
+            // Simulate registration
+            setTimeout(() => {
+                closeModal('eventRegistrationModal');
+                showSuccessMessage('Inscription confirmée ! Un email de confirmation a été envoyé à votre adresse.');
+            }, 1000);
+        });
+
+        function showSuccessMessage(message) {
+            document.getElementById('successMessage').textContent = message;
+            openModal('successModal');
+        }
+
+        // Create Event Form Functions
+        function toggleLocationFields(value) {
+            const physicalLocation = document.getElementById('physicalLocation');
+            if (value === 'physical' || value === 'hybrid') {
+                physicalLocation.classList.remove('hidden');
+            } else {
+                physicalLocation.classList.add('hidden');
+            }
+        }
+
+        function togglePriceField(value) {
+            const priceField = document.getElementById('priceField');
+            if (value === 'paid') {
+                priceField.classList.remove('hidden');
+            } else {
+                priceField.classList.add('hidden');
+            }
+        }
+
+        function saveAsDraft() {
+            showSuccessMessage('Événement sauvegardé en brouillon !');
+        }
+
+        // FreeFood toggle
+        document.getElementById('freeFoodToggle').addEventListener('change', function() {
+            const details = document.getElementById('freeFoodDetails');
+            if (this.checked) {
+                details.classList.remove('hidden');
+            } else {
+                details.classList.add('hidden');
+            }
+        });
+
+        // Event Registration
+        function registerForEvent(eventTitle, eventDate, eventLocation) {
+            document.getElementById('eventTitle').textContent = eventTitle;
+            document.getElementById('eventDate').textContent = eventDate;
+            document.getElementById('eventLocation').textContent = eventLocation;
+            openModal('eventRegistrationModal');
+        }
+
+        // Add event listeners to registration buttons
+        document.addEventListener('DOMContentLoaded', function() {
+            const registerButtons = document.querySelectorAll('.event-card button');
+            registerButtons.forEach((button, index) => {
+                button.addEventListener('click', function() {
+                    const card = this.closest('.event-card');
+                    const title = card.querySelector('h3').textContent;
+                    const dateTime = card.querySelector('.flex.items-center').textContent.trim();
+                    const location = card.querySelectorAll('.flex.items-center')[1].textContent.trim();
+                    
+                    registerForEvent(title, dateTime, location);
+                });
+            });
+        });
+
+        // Events Section Functionality (when in events section)
+        function initializeEventsSection() {
+            // Advanced filters toggle
+            const advancedFiltersBtn = document.getElementById('advancedFiltersBtn');
+            if (advancedFiltersBtn) {
+                advancedFiltersBtn.addEventListener('click', function() {
+                    const panel = document.getElementById('advancedFilters');
+                    panel.classList.toggle('hidden');
+                });
+            }
+
+            // Filter buttons functionality
+            document.querySelectorAll('.filter-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    // Remove active class from all buttons
+                    document.querySelectorAll('.filter-btn').forEach(btn => {
+                        btn.classList.remove('filter-active');
+                        if (!btn.classList.contains('freefood-badge')) {
+                            btn.classList.add('border', 'border-gray-300');
+                            btn.classList.remove('bg-electric-blue', 'text-white');
+                        }
+                    });
+                    
+                    // Add active class to clicked button
+                    if (!this.classList.contains('freefood-badge')) {
+                        this.classList.add('filter-active');
+                        this.classList.remove('border', 'border-gray-300');
+                    }
+                    
+                    // Filter logic
+                    const filter = this.getAttribute('data-filter');
+                    filterEvents(filter);
+                });
+            });
+
+            // View toggle functionality
+            const gridView = document.getElementById('gridView');
+            const listView = document.getElementById('listView');
+            
+            if (gridView && listView) {
+                gridView.addEventListener('click', function() {
+                    this.classList.add('bg-electric-blue', 'text-white');
+                    listView.classList.remove('bg-electric-blue', 'text-white');
+                    listView.classList.add('text-gray-600');
+                    
+                    // Switch to grid view
+                    const grid = document.getElementById('eventsGrid');
+                    grid.classList.add('md:grid-cols-2', 'lg:grid-cols-3');
+                    grid.classList.remove('grid-cols-1');
+                });
+
+                listView.addEventListener('click', function() {
+                    this.classList.add('bg-electric-blue', 'text-white');
+                    gridView.classList.remove('bg-electric-blue', 'text-white');
+                    gridView.classList.add('text-gray-600');
+                    
+                    // Switch to list view layout
+                    const grid = document.getElementById('eventsGrid');
+                    grid.classList.remove('md:grid-cols-2', 'lg:grid-cols-3');
+                    grid.classList.add('grid-cols-1');
+                });
+            }
+
+            // Search functionality
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.addEventListener('input', function() {
+                    const searchTerm = this.value.toLowerCase();
+                    searchEvents(searchTerm);
+                });
+            }
+        }
+
+        function filterEvents(filter) {
+            const events = document.querySelectorAll('.event-card');
+            let visibleCount = 0;
+            
+            events.forEach(event => {
+                let shouldShow = true;
+                
+                switch(filter) {
+                    case 'freefood':
+                        shouldShow = event.querySelector('.freefood-badge') !== null;
+                        break;
+                    case 'free':
+                        shouldShow = event.querySelector('.free-tag') !== null;
+                        break;
+                    case 'today':
+                        // Simulate today filter
+                        shouldShow = Math.random() > 0.7;
+                        break;
+                    case 'weekend':
+                        // Simulate weekend filter
+                        shouldShow = Math.random() > 0.5;
+                        break;
+                    default:
+                        shouldShow = true;
+                }
+                
+                if (shouldShow) {
+                    event.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    event.style.display = 'none';
+                }
+            });
+            
+            // Update results count
+            const resultsCount = document.getElementById('resultsCount');
+            if (resultsCount) {
+                resultsCount.textContent = visibleCount;
+            }
+        }
+
+        function searchEvents(searchTerm) {
+            const events = document.querySelectorAll('.event-card');
+            let visibleCount = 0;
+            
+            events.forEach(event => {
+                const title = event.querySelector('h3').textContent.toLowerCase();
+                const description = event.querySelector('p').textContent.toLowerCase();
+                
+                if (title.includes(searchTerm) || description.includes(searchTerm)) {
+                    event.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    event.style.display = 'none';
+                }
+            });
+            
+            // Update results count
+            const resultsCount = document.getElementById('resultsCount');
+            if (resultsCount) {
+                resultsCount.textContent = visibleCount;
+            }
+        }
+
+        // Initialize everything when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Show home section by default
+            showSection('home');
+            
+            // Initialize events section functionality
+            initializeEventsSection();
+            
+            // Add scroll effect to navigation
+            window.addEventListener('scroll', function() {
+                const nav = document.querySelector('nav');
+                if (window.scrollY > 100) {
+                    nav.classList.add('shadow-lg');
+                } else {
+                    nav.classList.remove('shadow-lg');
+                }
+            });
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98b73884a181534b',t:'MTc1OTk0MzEwMi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

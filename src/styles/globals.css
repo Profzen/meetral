@@ -2,8 +2,31 @@
 @import './tailwind.css';
 
 :root{
-  --brand: #4f46e5;
+  --brand: #D4AF37; /* Gold */
+  --brand-dark: #B8860B;
+  --bg: #070707; /* Near true black */
+  --surface: #0b0b0b; /* Slightly lighter than bg */
+  --text-primary: #f8f8f8;
+  --text-muted: #9ca3af;
+  /* status colors */
+  --success: #10b981; /* emerald 500 */
+  --success-dark: #065f46; /* emerald 900-ish for borders */
+  --warning: #f59e0b; /* amber 500 */
+  --danger: #ef4444; /* red 500 */
+  --danger-dark: #7f1d1d; /* darker red for borders */
 }
 
 /* petites règles utilitaires / resets */
 html,body,#__next { height: 100%; }
+
+/* Apply the default dark theme colors */
+body {
+  background-color: var(--bg);
+  color: var(--text-primary);
+}
+
+/* Links and interactive elements */
+a { color: var(--brand); }
+
+/* Helper class for surfaces */
+.surface { background-color: var(--surface); }

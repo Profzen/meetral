@@ -1,40 +1,195 @@
 ﻿// src/components/events/EventCard.jsx
 'use client';
-import React from 'react';
-import formatDate from '@/utils/formatDate';
+
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { useTranslation } from '@/lib/i18n';
+import { supabase } from '@/lib/supabaseClient';
 
 export default function EventCard({ event, onOpen }) {
-  const { id, title, place, date, freefood, cover_url, description, is_free } = event;
+  const { t } = useTranslation();
+  const { id, title, date, place, price, is_free, freefood, capacity, registered, image, description, cover_url, likes_count } = event;
+  const [isFavorited, setIsFavorited] = useState(false);
+  const [likesCount, setLikesCount] = useState(likes_count || 0);
+
+  const placesFilled = capacity > 0 ? Math.round((registered / capacity) * 100) : 0;
+  const placesRemaining = capacity - registered;
+  const isPaid = !is_free && price > 0;
+
+  // Check if user has favorited this event
+  useEffect(() => {
+    async function checkFavorite() {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session) return;
+
+      const token = session.session.access_token;
+      try {
+        const res = await fetch('/api/favorites', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const json = await res.json();
+        if (json.favorites && json.favorites.includes(id)) {
+          setIsFavorited(true);
+        }
+      } catch (e) {
+        console.error('Check favorite error', e);
+      }
+    }
+    checkFavorite();
+  }, [id]);
+
+  async function toggleFavorite(e) {
+    e.stopPropagation();
+    const { data: session } = await supabase.auth.getSession();
+    if (!session?.session) {
+      alert('Vous devez être connecté pour aimer un événement');
+      return;
+    }
+
+    const token = session.session.access_token;
+    try {
+      if (isFavorited) {
+        // Remove favorite
+        const res = await fetch(`/api/favorites?event_id=${id}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          setIsFavorited(false);
+          setLikesCount((c) => Math.max(0, c - 1));
+        }
+      } else {
+        // Add favorite
+        const res = await fetch('/api/favorites', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ event_id: id }),
+        });
+        if (res.ok) {
+          setIsFavorited(true);
+          setLikesCount((c) => c + 1);
+        }
+      }
+    } catch (err) {
+      console.error('Toggle favorite error', err);
+      alert('Erreur lors de la mise à jour des favoris');
+    }
+  }
 
   return (
-    <article className="bg-white rounded-lg shadow hover:shadow-md overflow-hidden flex flex-col">
-      <div className="h-44 bg-gray-100 overflow-hidden">
-        {cover_url ? (
-          <img src={cover_url} alt={title} className="w-full h-44 object-cover" />
-        ) : (
-          <div className="w-full h-44 flex items-center justify-center text-slate-400">No image</div>
+    <article className="bg-[var(--surface)] rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 flex flex-col h-full border border-[#111]">
+      {/* Image Container */}
+      <div className="relative w-full h-56 bg-[#0b0b0b] overflow-hidden flex-shrink-0 rounded-b-none">
+        <img
+          src={cover_url || image || 'https://via.placeholder.com/600x400?text=Event'}
+          alt={title}
+          className="w-full h-full object-cover rounded-t-md border border-[#222]"
+        />
+        
+        {/* Badge Container - Fixed positioning */}
+        <div className="absolute top-2 left-2 flex gap-2 flex-wrap">
+          {freefood && (
+            <span className="inline-block px-2 py-1 bg-[var(--success)] text-black rounded-full text-xs font-bold shadow-md">
+              🍕 FreeFood
+            </span>
+          )}
+          {is_free && (
+            <span className="inline-block px-2 py-1 bg-[var(--success)] text-black rounded-full text-xs font-bold shadow-md">
+              Gratuit
+            </span>
+          )}
+        </div>
+        
+        {/* Price Badge - Top Right */}
+        {isPaid && price && (
+          <div className="absolute top-2 right-2 px-3 py-1 bg-[var(--brand)] text-black rounded-full text-sm font-bold shadow-md">
+            {price}€
+          </div>
         )}
       </div>
 
-      <div className="p-4 flex-1 flex flex-col">
-        <div className="flex items-start justify-between gap-2">
-          <h3 className="text-lg font-semibold">{title}</h3>
-          <div className="text-sm text-slate-500">{formatDate(date)}</div>
+      {/* Content Container - Takes remaining space */}
+      <div className="p-4 flex flex-col flex-grow">
+        {/* Title and Description */}
+        <div className="mb-3">
+          <h3 className="text-base font-bold text-[var(--text-primary)] line-clamp-2">{title}</h3>
+          <p className="text-xs text-[var(--text-muted)] mt-1 line-clamp-2">{description}</p>
         </div>
 
-        <p className="text-sm text-slate-600 mt-2 line-clamp-3">{description || 'Pas de description'}</p>
-
-        <div className="mt-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {freefood && <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded">FreeFood</span>}
-            {is_free && <span className="text-xs bg-slate-100 text-slate-700 px-2 py-1 rounded">Gratuit</span>}
-            <div className="text-sm text-slate-500">{place}</div>
+        {/* Info Section - Flexible spacing */}
+          <div className="space-y-2 text-xs text-[var(--text-muted)] mb-3 flex-grow">
+          {/* Date et Lieu sur une ligne */}
+          <div className="flex items-center gap-3 flex-wrap">
+              <div className="flex items-center gap-1">
+              <span className="text-sm">📅</span>
+              <span className="font-medium text-[var(--text-primary)]">{new Date(date).toLocaleDateString('fr-FR', { month: 'short', day: 'numeric' })}</span>
+            </div>
+              <div className="flex items-center gap-1 flex-1">
+              <span className="text-sm">📍</span>
+              <span className="truncate font-medium text-[var(--text-primary)]">{place}</span>
+            </div>
           </div>
-
+          
+          {/* Places Info */}
           <div className="flex items-center gap-2">
-            <button onClick={() => onOpen && onOpen()} className="px-3 py-1 border rounded text-sm">Voir</button>
-            <button className="px-3 py-1 bg-sky-600 text-white rounded text-sm">Participer</button>
+            <span className="text-sm">👥</span>
+            <span className="font-medium">
+              {placesRemaining > 0 ? (
+                <>
+                  <span className="text-[var(--success)]">{placesRemaining}</span>
+                  <span className="text-[var(--text-muted)]"> places restantes</span>
+                </>
+              ) : (
+                <span className="text-[var(--danger)] font-bold">Complet</span>
+              )}
+            </span>
           </div>
+          
+          {/* Progress Bar */}
+          <div className="w-full bg-[#1b1b1b] rounded-full h-2 mt-2">
+            <div
+              className={`h-2 rounded-full transition-all ${
+                    placesFilled < 25 ? 'bg-[var(--success)]' : placesFilled < 50 ? 'bg-green-500' : placesFilled < 75 ? 'bg-yellow-500' : 'bg-[var(--danger)]'
+                  }`}
+              style={{ width: `${placesFilled}%` }}
+            />
+          </div>
+          <div className="text-xs text-[var(--text-muted)] text-right">{registered}/{capacity} inscrits</div>
+        </div>
+
+        {/* Actions - Fixed at bottom */}
+        <div className="flex gap-2 pt-3 border-t border-[#111]">
+          <button
+            onClick={() => onOpen && onOpen(event)}
+            className="flex-1 px-3 py-2 text-center bg-[var(--brand)] text-black rounded font-medium hover:opacity-95 transition text-sm"
+          >
+            {t('see_more')}
+          </button>
+          <button
+            onClick={() => onOpen && onOpen(event)}
+            className="flex-1 px-3 py-2 text-center bg-[#0f0f0f] border border-[#222] text-[var(--text-primary)] rounded font-medium hover:bg-[#1b1b1b] transition text-sm"
+          >
+            {t('register')}
+          </button>
+          <button
+            onClick={toggleFavorite}
+            className={`px-3 py-2 transition text-lg relative ${
+              isFavorited
+                ? 'text-[var(--danger)]'
+                : 'text-[var(--text-muted)] hover:text-[var(--danger)]'
+            }`}
+            title={isFavorited ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+          >
+            {isFavorited ? '❤️' : '♡'}
+            {likesCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-[var(--brand)] text-black text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                {likesCount > 99 ? '99+' : likesCount}
+              </span>
+            )}
+          </button>
         </div>
       </div>
     </article>
