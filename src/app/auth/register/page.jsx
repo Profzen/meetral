@@ -12,6 +12,7 @@ export default function RegisterPage() {
   const [roleRequest, setRoleRequest] = useState('user');
   const [loading, setLoading] = useState(false);
   const [info, setInfo] = useState(null);
+  const [redirectCountdown, setRedirectCountdown] = useState(null);
 
   async function onRegister(e) {
     e.preventDefault();
@@ -47,9 +48,22 @@ export default function RegisterPage() {
         text: '✅ Inscription réussie ! Un email de confirmation a été envoyé à ' + email + '. Vérifie ta boîte mail et clique sur le lien pour activer ton compte.' 
       });
 
+      setRedirectCountdown(3);
+      const interval = setInterval(() => {
+        setRedirectCountdown((c) => {
+          if (c === null) return null;
+          if (c <= 1) {
+            clearInterval(interval);
+            return 0;
+          }
+          return c - 1;
+        });
+      }, 1000);
+
       setTimeout(() => {
+        setRedirectCountdown(null);
         router.push('/auth/login?message=confirm_email');
-      }, 2000);
+      }, 3000);
 
     } catch (err) {
       console.error(err);
@@ -67,6 +81,9 @@ export default function RegisterPage() {
         {info && (
           <div className={`mb-4 text-sm p-3 rounded ${info.type === 'error' ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-green-500/20 text-green-400 border border-green-500/30'}`}>
             {info.text}
+            {info.type === 'success' && redirectCountdown !== null && (
+              <div className="mt-2 text-xs text-[var(--text-muted)]">Tu vas être redirigé vers la page de connexion dans {redirectCountdown} seconde{redirectCountdown > 1 ? 's' : ''}…</div>
+            )}
           </div>
         )}
 
