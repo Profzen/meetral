@@ -9,6 +9,7 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
+  const [phone, setPhone] = useState('');
   const [roleRequest, setRoleRequest] = useState('user');
   const [loading, setLoading] = useState(false);
   const [info, setInfo] = useState(null);
@@ -32,6 +33,7 @@ export default function RegisterPage() {
           emailRedirectTo: `${window.location.origin}/auth/confirm`,
           data: {
             display_name: displayName,
+            phone: phone,
             role_request: roleRequest,
           }
         }
@@ -91,6 +93,11 @@ export default function RegisterPage() {
           <div>
             <label className="block text-sm font-medium text-[var(--text-muted)]">Nom (optionnel)</label>
             <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} className="mt-1 block w-full rounded border border-[#222] bg-[#0f0f0f] text-[var(--text-primary)] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--brand)]" placeholder="Ex: Alice" disabled={loading} />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-[var(--text-muted)]">Téléphone (optionnel)</label>
+            <input value={phone} onChange={(e) => setPhone(e.target.value)} type="tel" className="mt-1 block w-full rounded border border-[#222] bg-[#0f0f0f] text-[var(--text-primary)] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[var(--brand)]" placeholder="Ex: +33 6 12 34 56 78" disabled={loading} />
           </div>
 
           <div>

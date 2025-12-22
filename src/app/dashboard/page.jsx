@@ -6,9 +6,16 @@ import { supabase } from '@/lib/supabaseClient';
 
 export default function DashboardPage() {
   const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
   const [role, setRole] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [stats, setStats] = useState({
+    participations: 0,
+    tickets: 0,
+    createdEvents: 0,
+    upcomingEvents: 0,
+  });
 
   // LocalStorage data for non-authenticated users
   const [localData, setLocalData] = useState({
@@ -34,17 +41,21 @@ export default function DashboardPage() {
           setUser(session.user);
           setIsAuthenticated(true);
 
-          // Récupérer le rôle depuis la table users
+          // Récupérer le profil depuis la table users
           const { data, error } = await supabase
             .from('users')
-            .select('role')
+            .select('role, display_name, phone, email')
             .eq('user_id', session.user.id)
             .single();
 
           if (!error && data) {
             setRole(data.role);
-            console.log('User role:', data.role);
+            setProfile(data);
+            console.log('User profile:', data);
           }
+
+          // Charger les statistiques depuis la base
+          await loadStatistics(session.user.id);
         }
       } else {
         // Utilisateur non connecté - charger depuis localStorage
@@ -58,6 +69,46 @@ export default function DashboardPage() {
       }
 
       if (mounted) setLoading(false);
+    }
+
+    async function loadStatistics(userId) {
+      try {
+        // Participations count
+        const { data: participations } = await supabase
+          .from('event_participants')
+          .select('id')
+          .eq('user_id', userId);
+        
+        // Tickets count (same as event_participants)
+        const { data: tickets } = await supabase
+          .from('event_participants')
+          .select('id')
+          .eq('user_id', userId);
+        
+        // Created events count
+        const { data: createdEvents } = await supabase
+          .from('events')
+          .select('id')
+          .eq('organizer_id', userId);
+        
+        // Upcoming events count (events with date > now)
+        const { data: upcomingEvents } = await supabase
+          .from('events')
+          .select('id')
+          .eq('organizer_id', userId)
+          .gte('date', new Date().toISOString());
+
+        if (mounted) {
+          setStats({
+            participations: participations?.length || 0,
+            tickets: tickets?.length || 0,
+            createdEvents: createdEvents?.length || 0,
+            upcomingEvents: upcomingEvents?.length || 0,
+          });
+        }
+      } catch (err) {
+        console.error('Error loading statistics:', err);
+      }
     }
 
     checkAuth();
@@ -155,9 +206,33 @@ export default function DashboardPage() {
     <section>
       <div className="mb-8">
         <h1 className="text-4xl font-bold text-[var(--text-primary)]">
-          Bienvenue, {user?.email}
+          Bienvenue, {profile?.display_name || user?.email}
         </h1>
         <p className="text-[var(--text-muted)] mt-2">Gérez vos événements et participations</p>
+      </div>
+
+      {/* Statistiques en base de données */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div className="bg-[var(--surface)] rounded-lg shadow-md p-4 border border-[#111]">
+          <div className="text-2xl mb-1">👥</div>
+          <p className="text-[var(--text-muted)] text-xs mb-1">Participations</p>
+          <p className="text-3xl font-bold text-[var(--brand)]">{stats.participations}</p>
+        </div>
+        <div className="bg-[var(--surface)] rounded-lg shadow-md p-4 border border-[#111]">
+          <div className="text-2xl mb-1">🎫</div>
+          <p className="text-[var(--text-muted)] text-xs mb-1">Billets</p>
+          <p className="text-3xl font-bold text-[var(--brand)]">{stats.tickets}</p>
+        </div>
+        <div className="bg-[var(--surface)] rounded-lg shadow-md p-4 border border-[#111]">
+          <div className="text-2xl mb-1">📅</div>
+          <p className="text-[var(--text-muted)] text-xs mb-1">Événements créés</p>
+          <p className="text-3xl font-bold text-[var(--brand)]">{stats.createdEvents}</p>
+        </div>
+        <div className="bg-[var(--surface)] rounded-lg shadow-md p-4 border border-[#111]">
+          <div className="text-2xl mb-1">⏰</div>
+          <p className="text-[var(--text-muted)] text-xs mb-1">À venir</p>
+          <p className="text-3xl font-bold text-[var(--brand)]">{stats.upcomingEvents}</p>
+        </div>
       </div>
 
       {/* Actions principales */}
