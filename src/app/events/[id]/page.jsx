@@ -87,18 +87,20 @@ export default function EventDetailPage({ params }) {
               <div>
                 <p className="text-sm text-[var(--text-muted)]">Date</p>
                 <p className="font-semibold text-[var(--text-primary)]">
-                  {new Date(eventDetails.date).toLocaleDateString('fr-FR', {
+                  {eventDetails.date && eventDetails.start_time ? new Date(`${eventDetails.date}T${eventDetails.start_time}`).toLocaleString('fr-FR', {
                     weekday: 'long',
                     year: 'numeric',
                     month: 'long',
                     day: 'numeric',
-                  })}
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  }) : 'Date non disponible'}
                 </p>
               </div>
               <div>
                 <p className="text-sm text-[var(--text-muted)]">Horaire</p>
                 <p className="font-semibold text-[var(--text-primary)]">
-                  {eventDetails.time} - {eventDetails.endTime}
+                  {eventDetails.start_time ? eventDetails.start_time : '—'}
                 </p>
               </div>
               <div>

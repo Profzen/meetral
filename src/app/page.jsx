@@ -63,6 +63,7 @@ export default function HomePage() {
       const res = await fetch(`/api/events/smart-ranked?${query}`);
       const json = await res.json();
       const list = json?.events ?? [];
+      console.log('Homepage events from smart-ranked:', list);
       
       // Fallback: if ranked returns too few, fetch non-ranked list
       let source = list;
@@ -182,7 +183,17 @@ export default function HomePage() {
         {/* Events grid */}
         <section className="mt-6">
           {loading ? (
-            <div className="text-center py-12">Chargement des événements…</div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {Array.from({ length: 8 }).map((_, idx) => (
+                <div key={idx} className="animate-pulse bg-[var(--surface)] rounded-lg border border-[#111] p-4 space-y-3">
+                  <div className="h-36 bg-[#111] rounded" />
+                  <div className="h-4 bg-[#111] rounded w-3/4" />
+                  <div className="h-3 bg-[#111] rounded w-1/2" />
+                  <div className="h-2 bg-[#111] rounded w-full" />
+                  <div className="h-2 bg-[#111] rounded w-5/6" />
+                </div>
+              ))}
+            </div>
             ) : filtered.length === 0 ? (
             <div className="bg-[var(--surface)] p-6 rounded shadow text-center border border-[#111]">
               <h3 className="text-xl font-semibold text-[var(--text-primary)]">Aucun événement trouvé</h3>

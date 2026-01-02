@@ -19,6 +19,7 @@ export default function EventForm({ initialEvent = null, eventId = null, onSucce
     title: '',
     description: '',
     date: '',
+    start_time: '18:00',
     place: '',
     is_free: false,
     freefood: false,
@@ -39,6 +40,7 @@ export default function EventForm({ initialEvent = null, eventId = null, onSucce
         title: ev.title ?? '',
         description: ev.description ?? '',
         date: ev.date ? ev.date.split('T')[0] : '',
+        start_time: ev.start_time ?? '18:00',
         place: ev.place ?? '',
         is_free: !!ev.is_free,
         freefood: !!ev.freefood,
@@ -67,6 +69,7 @@ export default function EventForm({ initialEvent = null, eventId = null, onSucce
             title: ev.title ?? '',
             description: ev.description ?? '',
             date: ev.date ? ev.date.split('T')[0] : '',
+            start_time: ev.start_time ?? '18:00',
             place: ev.place ?? '',
             is_free: !!ev.is_free,
             freefood: !!ev.freefood,
@@ -132,6 +135,11 @@ export default function EventForm({ initialEvent = null, eventId = null, onSucce
     try {
       if (!form.title || !form.date) {
         setMessage({ type: 'error', text: 'Titre et date requis.' });
+        setLoading(false);
+        return;
+      }
+      if (!form.start_time) {
+        setMessage({ type: 'error', text: "Indique une heure de début" });
         setLoading(false);
         return;
       }
@@ -243,6 +251,10 @@ export default function EventForm({ initialEvent = null, eventId = null, onSucce
           <input name="date" type="date" value={form.date} onChange={onChange} className="mt-1 block w-full rounded border border-[#222] bg-[#0f0f0f] text-[var(--text-primary)] px-3 py-2" />
         </div>
         <div>
+          <label className="block text-sm font-medium text-[var(--text-muted)]">Heure de début *</label>
+          <input name="start_time" type="time" value={form.start_time} onChange={onChange} className="mt-1 block w-full rounded border border-[#222] bg-[#0f0f0f] text-[var(--text-primary)] px-3 py-2" />
+        </div>
+        <div>
           <label className="block text-sm font-medium text-[var(--text-muted)]">Lieu</label>
           <input name="place" value={form.place} onChange={onChange} className="mt-1 block w-full rounded border border-[#222] bg-[#0f0f0f] text-[var(--text-primary)] px-3 py-2" />
         </div>
@@ -275,10 +287,17 @@ export default function EventForm({ initialEvent = null, eventId = null, onSucce
       </div>
 
       <div className="flex items-center gap-3">
-        <button type="submit" disabled={loading} className="bg-[var(--brand)] text-black px-4 py-2 rounded">
-          {loading ? (mode === 'create' ? 'Publication…' : 'Enregistrement…') : (mode === 'create' ? 'Publier' : 'Mettre à jour')}
+        <button type="submit" disabled={loading} className="bg-[var(--brand)] text-black px-4 py-2 rounded flex items-center gap-2 disabled:opacity-50">
+          {loading ? (
+            <>
+              <span className="w-4 h-4 border-2 border-black/40 border-t-black rounded-full animate-spin" aria-hidden="true"></span>
+              <span>{mode === 'create' ? 'Publication…' : 'Enregistrement…'}</span>
+            </>
+          ) : (
+            mode === 'create' ? 'Publier' : 'Mettre à jour'
+          )}
         </button>
-        <button type="button" onClick={() => { setForm({ title: '', description: '', date: '', place: '', is_free: false, freefood: false, price: null, capacity: 0 }); setCoverFile(null); setCoverPreview(null); }} className="text-sm px-3 py-1 border rounded border-[#222] text-[var(--text-muted)]">Réinitialiser</button>
+        <button type="button" onClick={() => { setForm({ title: '', description: '', date: '', start_time: '18:00', place: '', is_free: false, freefood: false, price: null, capacity: 0 }); setCoverFile(null); setCoverPreview(null); }} className="text-sm px-3 py-1 border rounded border-[#222] text-[var(--text-muted)]">Réinitialiser</button>
       </div>
     </form>
   );

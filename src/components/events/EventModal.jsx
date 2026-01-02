@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { jsPDF } from 'jspdf';
 import QRCode from 'qrcode';
 import formatDate from '@/utils/formatDate';
+import { supabase } from '@/lib/supabaseClient';
 
 export default function EventModal({ event, onClose, onRegistrationSuccess }) {
   const [joining, setJoining] = useState(false);
@@ -11,8 +12,9 @@ export default function EventModal({ event, onClose, onRegistrationSuccess }) {
 
   // Validate and fix image URL (only cover_url exists now)
   const getValidImageUrl = () => {
+    const placeholder = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22600%22 height=%22400%22 viewBox=%220 0 600 400%22%3E%3Crect width=%22600%22 height=%22400%22 fill=%22%23222%22/%3E%3Ctext x=%22300%22 y=%22205%22 fill=%22%23aaa%22 font-size=%2232%22 text-anchor=%22middle%22 font-family=%22Arial,sans-serif%22%3EEvent%3C/text%3E%3C/svg%3E';
     if (!event.cover_url) {
-      return 'https://via.placeholder.com/600x400?text=Event';
+      return placeholder;
     }
     
     // Check if URL is valid
@@ -20,10 +22,24 @@ export default function EventModal({ event, onClose, onRegistrationSuccess }) {
       return event.cover_url;
     }
     
-    return 'https://via.placeholder.com/600x400?text=Event';
+    return placeholder;
   };
 
   const imageUrl = getValidImageUrl();
+
+  const formatDateTime = (date, time) => {
+    if (!date) return '';
+    try {
+      // Extraire juste la partie date YYYY-MM-DD si c'est au format ISO complet
+      const dateOnly = typeof date === 'string' ? date.split('T')[0] : date;
+      const iso = time && time !== '00:00' ? `${dateOnly}T${time}` : dateOnly;
+      const d = new Date(iso);
+      if (isNaN(d.getTime())) return dateOnly;
+      return d.toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' });
+    } catch (e) {
+      return date;
+    }
+  };
 
   const placesRemaining = (event.capacity || 0) - (event.registered || 0);
   const placesFilled = event.capacity > 0 ? Math.round(((event.registered || 0) / event.capacity) * 100) : 0;
@@ -37,16 +53,18 @@ export default function EventModal({ event, onClose, onRegistrationSuccess }) {
       doc.text('Ticket Meetral', 105, 20, { align: 'center' });
       doc.setFontSize(12);
       doc.text(`Événement: ${registration.event.title}`, 20, 40);
-      doc.text(`Date: ${new Date(registration.event.date).toLocaleString('fr-FR')}`, 20, 50);
+      doc.text(`Date: ${formatDateTime(registration.event.date, registration.event.start_time)}`, 20, 50);
       doc.text(`Lieu: ${registration.event.place}`, 20, 60);
       doc.setFontSize(11);
-      doc.text(`Nom: ${registration.name}`, 20, 75);
-      doc.text(`Email: ${registration.email}`, 20, 85);
-      doc.text(`Places: ${registration.count}`, 20, 95);
-      doc.text(`ID d'inscription: ${registration.id}`, 20, 105);
+      doc.text(`Bonjour ${registration.name || 'participant'},`, 20, 70);
+      doc.text('Merci pour votre inscription. Voici votre billet personnalisé.', 20, 78);
+      doc.text(`Nom: ${registration.name}`, 20, 86);
+      doc.text(`Email: ${registration.email}`, 20, 94);
+      doc.text(`Places: ${registration.count}`, 20, 102);
+      doc.text(`Code Ticket: ${registration.ticket_code}`, 20, 110);
       const qrDataUrl = await QRCode.toDataURL(registration.qrText, { margin: 1, width: 256 });
-      doc.addImage(qrDataUrl, 'PNG', 20, 120, 50, 50);
-      doc.save(`ticket-${registration.id}.pdf`);
+      doc.addImage(qrDataUrl, 'PNG', 20, 126, 50, 50);
+      doc.save(`ticket-${registration.ticket_code}.pdf`);
     } catch (e) {
       console.error('PDF generation error', e);
       alert('Erreur lors de la génération du PDF');
@@ -56,9 +74,18 @@ export default function EventModal({ event, onClose, onRegistrationSuccess }) {
   async function onJoin() {
     setJoining(true);
     try {
+      // Get the session token
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !session?.access_token) {
+        throw new Error('Vous devez être connecté pour vous inscrire');
+      }
+
       const res = await fetch('/api/tickets', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify({
           event_id: event.id,
           name: form.name,
@@ -71,6 +98,7 @@ export default function EventModal({ event, onClose, onRegistrationSuccess }) {
         throw new Error(j.error || 'Inscription impossible');
       }
       const j = await res.json();
+      console.log('Registration response:', j.registration);
       if (j.success && j.registration) {
         await generatePDF(j.registration);
         alert('Inscription confirmée. Votre ticket PDF a été généré et téléchargé.');
@@ -99,7 +127,7 @@ export default function EventModal({ event, onClose, onRegistrationSuccess }) {
         <div className="p-4 border-b border-[#111] flex items-center justify-between gap-4 flex-shrink-0">
           <div>
             <h2 className="text-2xl font-bold text-[var(--text-primary)]">{event.title}</h2>
-            <div className="text-sm text-[var(--text-muted)] mt-1">{formatDate(event.date)} • {event.place}</div>
+            <div className="text-sm text-[var(--text-muted)] mt-1">{formatDateTime(event.date, event.start_time)} • {event.place}</div>
           </div>
           <button onClick={onClose} className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition text-2xl">✕</button>
         </div>
@@ -116,7 +144,7 @@ export default function EventModal({ event, onClose, onRegistrationSuccess }) {
                 alt={event.title} 
                 className="w-full h-64 lg:h-80 object-cover"
                 onError={(e) => {
-                  e.target.src = 'https://via.placeholder.com/600x400?text=Event';
+                  e.target.src = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22600%22 height=%22400%22 viewBox=%220 0 600 400%22%3E%3Crect width=%22600%22 height=%22400%22 fill=%22%23222%22/%3E%3Ctext x=%22300%22 y=%22205%22 fill=%22%23aaa%22 font-size=%2232%22 text-anchor=%22middle%22 font-family=%22Arial,sans-serif%22%3EEvent%3C/text%3E%3C/svg%3E';
                 }}
               />
             </div>
@@ -254,9 +282,16 @@ export default function EventModal({ event, onClose, onRegistrationSuccess }) {
                   <button 
                     onClick={onJoin} 
                     disabled={joining} 
-                    className="w-full px-4 py-3 bg-[var(--brand)] text-black rounded font-semibold hover:opacity-95 transition disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+                    className="w-full px-4 py-3 bg-[var(--brand)] text-black rounded font-semibold hover:opacity-95 transition disabled:opacity-50 disabled:cursor-not-allowed mt-2 flex items-center justify-center gap-2"
                   >
-                    {joining ? 'Inscription en cours...' : 'S\'inscrire'}
+                    {joining ? (
+                      <>
+                        <span className="w-4 h-4 border-2 border-black/40 border-t-black rounded-full animate-spin" aria-hidden="true"></span>
+                        <span>Inscription en cours…</span>
+                      </>
+                    ) : (
+                      "S'inscrire"
+                    )}
                   </button>
                 </div>
               </div>

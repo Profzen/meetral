@@ -100,7 +100,7 @@ export default function ProfilePage(){
           <form onSubmit={onSave} className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm text-[var(--text-muted)]">Email</label>
-              <p className="font-semibold text-[var(--text-primary)]">{session?.user.email}</p>
+              <p className="text-sm text-[var(--text-muted)]">{session?.user.email}</p>
               <p className="text-xs text-[var(--text-muted)] mt-1">Rôle: {role ?? 'Membre'}</p>
             </div>
             <div>

@@ -77,7 +77,7 @@ export async function PATCH(req, { params }) {
     // 4) parse body and update allowed fields only
     const body = await req.json();
     // whitelist fields autorisés à la mise à jour
-    const allowed = ['title', 'description', 'date', 'place', 'freefood', 'is_free', 'cover_url', 'price', 'capacity'];
+    const allowed = ['title', 'description', 'date', 'start_time', 'place', 'freefood', 'is_free', 'cover_url', 'price', 'capacity'];
     const payload = {};
     for (const k of allowed) {
       if (Object.prototype.hasOwnProperty.call(body, k)) payload[k] = body[k];

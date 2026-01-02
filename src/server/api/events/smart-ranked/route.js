@@ -19,13 +19,14 @@ export async function GET(req) {
     
     // Fetch events with minimal columns for performance
     // Over-fetch to allow scoring + filtering full events
-    const { data: events, error } = await supabaseAdmin
+    const { data: rawEvents, error } = await supabaseAdmin
       .from('events')
       .select(`
         id,
         title,
         description,
         date,
+        start_time,
         place,
         cover_url,
         price,
@@ -42,6 +43,12 @@ export async function GET(req) {
       .limit(limit * 3); // over-fetch to allow filtering
 
     if (error) throw error;
+
+    // Normalize dates to YYYY-MM-DD format (remove time/timezone)
+    const events = (rawEvents || []).map(ev => ({
+      ...ev,
+      date: ev.date ? ev.date.split('T')[0] : ev.date,
+    }));
 
     if (!events || events.length === 0) {
       return new Response(JSON.stringify({ events: [], total: 0 }), { status: 200 });
@@ -93,10 +100,6 @@ export async function GET(req) {
         else if (fillRate >= 30 && fillRate < 50) fillRateScore = 3;
         else fillRateScore = 1;
 
-        // Likes score
-        const likesCount = ev.likes?.[0]?.count || 0;
-        const likesScore = Math.min(10, likesCount * 0.5);
-
         // Recency score
         const createdAt = ev.created_at ? new Date(ev.created_at) : now;
         const hoursSinceCreated = (now - createdAt) / (1000 * 60 * 60);
@@ -106,17 +109,15 @@ export async function GET(req) {
         else if (hoursSinceCreated < 168) recencyScore = 3;
         else if (hoursSinceCreated < 720) recencyScore = 1;
 
-        // Total score
+        // Total score (SANS likes)
         const score =
           imminenceScore * 3 +
           popularityScore * 2 +
           fillRateScore * 1.5 +
-          likesScore * 1 +
           recencyScore * 1.2;
 
         return {
           ...ev,
-          likes_count: likesCount,
           isFavorited: userFavorites.has(ev.id),
           score,
         };

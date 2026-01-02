@@ -8,7 +8,7 @@ import { supabase } from '@/lib/supabaseClient';
 
 export default function EventCard({ event, onOpen }) {
   const { t } = useTranslation();
-  const { id, title, date, place, price, is_free, freefood, capacity, registered, description, cover_url, likes_count } = event;
+  const { id, title, date, start_time, place, price, is_free, freefood, capacity, registered, description, cover_url, likes_count } = event;
   const [isFavorited, setIsFavorited] = useState(false);
   const [likesCount, setLikesCount] = useState(likes_count || 0);
 
@@ -16,10 +16,25 @@ export default function EventCard({ event, onOpen }) {
   const placesRemaining = capacity - registered;
   const isPaid = !is_free && price > 0;
 
+  const formatDateTime = (d, time) => {
+    if (!d) return '';
+    try {
+      // Extraire juste la partie date YYYY-MM-DD si c'est au format ISO complet
+      const dateOnly = typeof d === 'string' ? d.split('T')[0] : d;
+      const iso = time && time !== '00:00' ? `${dateOnly}T${time}` : dateOnly;
+      const dateObj = new Date(iso);
+      if (isNaN(dateObj.getTime())) return dateOnly;
+      return dateObj.toLocaleString('fr-FR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    } catch (e) {
+      return d;
+    }
+  };
+
   // Validate and fix image URL (only cover_url exists now)
   const getValidImageUrl = () => {
+    const placeholder = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22600%22 height=%22400%22 viewBox=%220 0 600 400%22%3E%3Crect width=%22600%22 height=%22400%22 fill=%22%23222%22/%3E%3Ctext x=%22300%22 y=%22205%22 fill=%22%23aaa%22 font-size=%2232%22 text-anchor=%22middle%22 font-family=%22Arial,sans-serif%22%3EEvent%3C/text%3E%3C/svg%3E';
     if (!cover_url) {
-      return 'https://via.placeholder.com/600x400?text=Event';
+      return placeholder;
     }
     
     // Check if URL is valid (starts with http/https or is a relative path starting with /)
@@ -28,7 +43,7 @@ export default function EventCard({ event, onOpen }) {
     }
     
     // Fallback to placeholder
-    return 'https://via.placeholder.com/600x400?text=Event';
+    return placeholder;
   };
 
   const imageUrl = getValidImageUrl();
@@ -105,7 +120,7 @@ export default function EventCard({ event, onOpen }) {
           alt={title}
           className="w-full h-full object-cover rounded-t-md border border-[#222]"
           onError={(e) => {
-            e.target.src = 'https://via.placeholder.com/600x400?text=Event';
+            e.target.src = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22600%22 height=%22400%22 viewBox=%220 0 600 400%22%3E%3Crect width=%22600%22 height=%22400%22 fill=%22%23222%22/%3E%3Ctext x=%22300%22 y=%22205%22 fill=%22%23aaa%22 font-size=%2232%22 text-anchor=%22middle%22 font-family=%22Arial,sans-serif%22%3EEvent%3C/text%3E%3C/svg%3E';
           }}
         />
         
@@ -143,11 +158,11 @@ export default function EventCard({ event, onOpen }) {
           <div className="space-y-2 text-xs text-[var(--text-muted)] mb-3 flex-grow">
           {/* Date et Lieu sur une ligne */}
           <div className="flex items-center gap-3 flex-wrap">
-              <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1">
               <span className="text-sm">📅</span>
-              <span className="font-medium text-[var(--text-primary)]">{new Date(date).toLocaleDateString('fr-FR', { month: 'short', day: 'numeric' })}</span>
+              <span className="font-medium text-[var(--text-primary)]">{formatDateTime(date, start_time)}</span>
             </div>
-              <div className="flex items-center gap-1 flex-1">
+            <div className="flex items-center gap-1 flex-1">
               <span className="text-sm">📍</span>
               <span className="truncate font-medium text-[var(--text-primary)]">{place}</span>
             </div>

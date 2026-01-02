@@ -4,15 +4,21 @@ import { supabaseAdmin } from '@/lib/supabaseAdmin';
 export async function GET(req) {
   try {
     console.log('[API] GET /api/events called');
-    const { data, error } = await supabaseAdmin
+    const { data: rawEvents, error } = await supabaseAdmin
       .from('events')
       .select('*')
       .order('created_at', { ascending: false });
 
     if (error) throw error;
     
+    // Normalize dates to YYYY-MM-DD format
+    const events = (rawEvents || []).map(ev => ({
+      ...ev,
+      date: ev.date ? ev.date.split('T')[0] : ev.date,
+    }));
+    
     // Filter out full events (registered >= capacity)
-    const availableEvents = (data || []).filter(event => {
+    const availableEvents = events.filter(event => {
       const registered = event.registered || 0;
       const capacity = event.capacity || 0;
       return registered < capacity; // Only show events with available places
@@ -26,6 +32,7 @@ export async function GET(req) {
           title: 'Formation React.js pour débutants',
           description: 'Apprenez les bases de React.js',
           date: '2025-12-20',
+          start_time: '18:00',
           place: 'Paris 11e',
           price: 0,
           capacity: 50,
@@ -40,6 +47,7 @@ export async function GET(req) {
           title: 'Atelier Design Thinking',
           description: 'Découvrez les méthodes du design thinking',
           date: '2025-12-22',
+          start_time: '14:30',
           place: 'Lyon 2e',
           price: 25,
           capacity: 20,
@@ -91,7 +99,7 @@ export async function POST(req) {
     const body = await req.json();
     // log minimal body for debug (avoid logging sensitive info)
     console.log('[API] POST body keys:', Object.keys(body));
-    const { title, description, date, place, freefood = false, is_free = false, cover_url = null, price = 0, capacity = 0 } = body;
+    const { title, description, date, start_time = '18:00', place, freefood = false, is_free = false, cover_url = null, price = 0, capacity = 0 } = body;
 
     const { data: inserted, error: insertErr } = await supabaseAdmin
       .from('events')
@@ -99,6 +107,7 @@ export async function POST(req) {
         title,
         description,
         date,
+        start_time,
         place,
         freefood,
         is_free,

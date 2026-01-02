@@ -9,6 +9,19 @@ export async function POST(req) {
       return new Response(JSON.stringify({ error: 'Paramètres invalides' }), { status: 400 });
     }
 
+    // Get authenticated user from Authorization header
+    const authHeader = req.headers.get('authorization') || '';
+    const token = authHeader.replace('Bearer ', '');
+    
+    if (!token) {
+      return new Response(JSON.stringify({ error: 'Non authentifié' }), { status: 401 });
+    }
+
+    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
+    if (userError || !user) {
+      return new Response(JSON.stringify({ error: 'Utilisateur non authentifié' }), { status: 401 });
+    }
+
     const { data: ev, error: evErr } = await supabaseAdmin
       .from('events')
       .select('*')
@@ -22,19 +35,21 @@ export async function POST(req) {
       return new Response(JSON.stringify({ error: 'Capacité insuffisante' }), { status: 409 });
     }
 
-    const registrationId = `${event_id}-${Date.now()}`;
-    const qrText = `meetral:ticket:${registrationId}`;
+    // Insert into event_participants (trigger will generate ticket_code automatically)
+    // Keep payload minimal to match table schema
+    const { data: participant, error: regErr } = await supabaseAdmin
+      .from('event_participants')
+      .insert({
+        event_id,
+        user_id: user.id,
+      })
+      .select()
+      .single();
 
-    // Store registration in database
-    const { error: regErr } = await supabaseAdmin.from('registrations').insert({
-      registration_id: registrationId,
-      event_id,
-      name,
-      email,
-      count,
-      qr_text: qrText,
-    });
-    if (regErr) return new Response(JSON.stringify({ error: 'Erreur enregistrement inscription' }), { status: 500 });
+    if (regErr) {
+      console.error('Registration error:', regErr);
+      return new Response(JSON.stringify({ error: 'Erreur enregistrement inscription', details: regErr.message || regErr.code }), { status: 500 });
+    }
 
     // Update event registered count
     const { error: updErr } = await supabaseAdmin
@@ -46,14 +61,21 @@ export async function POST(req) {
       return new Response(JSON.stringify({ error: 'Erreur mise à jour capacité', details: updErr.message }), { status: 500 });
     }
 
-    // Return registration data for client-side PDF generation
+    // Return registration data for client-side PDF generation with 10-digit ticket_code
+    const qrText = `meetral:ticket:${participant.ticket_code}`;
+    
+    // Normalize date format
+    const eventDate = ev.date ? ev.date.split('T')[0] : ev.date;
+    
     return new Response(JSON.stringify({
       success: true,
       registration: {
-        id: registrationId,
+        id: participant.ticket_code, // Use 10-digit code
+        ticket_code: participant.ticket_code, // Explicit ticket code
         event: {
           title: ev.title,
-          date: ev.date,
+          date: eventDate,
+          start_time: ev.start_time || '18:00',
           place: ev.place,
         },
         name,

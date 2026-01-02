@@ -13,6 +13,7 @@
     "migrate:db": "powershell -File scripts/run-migrations.ps1 -ConnectionString $env:PG_CONNECTION"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.0.0",
     "cloudinary": "^2.8.0",
     "jspdf": "^2.5.2",

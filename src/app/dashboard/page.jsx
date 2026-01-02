@@ -48,10 +48,14 @@ export default function DashboardPage() {
             .eq('user_id', session.user.id)
             .single();
 
+          console.log('User fetch - data:', data, 'error:', error);
+
           if (!error && data) {
             setRole(data.role);
             setProfile(data);
-            console.log('User profile:', data);
+            console.log('User profile loaded:', data);
+          } else {
+            console.error('Failed to load profile:', error);
           }
 
           // Charger les statistiques depuis la base
@@ -73,37 +77,36 @@ export default function DashboardPage() {
 
     async function loadStatistics(userId) {
       try {
-        // Participations count
-        const { data: participations } = await supabase
-          .from('event_participants')
-          .select('id')
-          .eq('user_id', userId);
-        
-        // Tickets count (same as event_participants)
-        const { data: tickets } = await supabase
-          .from('event_participants')
-          .select('id')
-          .eq('user_id', userId);
-        
-        // Created events count
-        const { data: createdEvents } = await supabase
-          .from('events')
-          .select('id')
-          .eq('organizer_id', userId);
-        
-        // Upcoming events count (events with date > now)
-        const { data: upcomingEvents } = await supabase
-          .from('events')
-          .select('id')
-          .eq('organizer_id', userId)
-          .gte('date', new Date().toISOString());
+        // Récupérer stats depuis la table optimisée user_stats
+        const { data: userStats, error } = await supabase
+          .from('user_stats')
+          .select('*')
+          .eq('user_id', userId)
+          .single();
 
-        if (mounted) {
+        if (error) {
+          console.error('Error loading user_stats:', error);
+          // Fallback: stats vides
+          if (mounted) {
+            setStats({
+              participations: 0,
+              tickets: 0,
+              createdEvents: 0,
+              upcomingEvents: 0,
+            });
+          }
+          return;
+        }
+
+        if (mounted && userStats) {
           setStats({
-            participations: participations?.length || 0,
-            tickets: tickets?.length || 0,
-            createdEvents: createdEvents?.length || 0,
-            upcomingEvents: upcomingEvents?.length || 0,
+            participations: userStats.total_participations || 0,
+            tickets: userStats.total_participations || 0, // Billets = participations
+            createdEvents: userStats.total_events_created || 0,
+            upcomingEvents: userStats.upcoming_events_created || 0,
+            favorites: userStats.total_favorites || 0,
+            upcomingParticipations: userStats.upcoming_participations || 0,
+            totalRegistrations: userStats.total_registrations_received || 0,
           });
         }
       } catch (err) {
@@ -212,27 +215,54 @@ export default function DashboardPage() {
       </div>
 
       {/* Statistiques en base de données */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        {/* Participations - pour tous */}
         <div className="bg-[var(--surface)] rounded-lg shadow-md p-4 border border-[#111]">
           <div className="text-2xl mb-1">👥</div>
           <p className="text-[var(--text-muted)] text-xs mb-1">Participations</p>
           <p className="text-3xl font-bold text-[var(--brand)]">{stats.participations}</p>
         </div>
+
+        {/* Billets - pour tous */}
         <div className="bg-[var(--surface)] rounded-lg shadow-md p-4 border border-[#111]">
           <div className="text-2xl mb-1">🎫</div>
           <p className="text-[var(--text-muted)] text-xs mb-1">Billets</p>
           <p className="text-3xl font-bold text-[var(--brand)]">{stats.tickets}</p>
         </div>
+
+        {/* Événements créés - pour organisateurs/admins */}
+        {(role === 'organisateur' || role === 'admin') && (
+          <div className="bg-[var(--surface)] rounded-lg shadow-md p-4 border border-[#111]">
+            <div className="text-2xl mb-1">📅</div>
+            <p className="text-[var(--text-muted)] text-xs mb-1">Événements créés</p>
+            <p className="text-3xl font-bold text-[var(--brand)]">{stats.createdEvents}</p>
+          </div>
+        )}
+
+        {/* À venir - pour organisateurs/admins */}
+        {(role === 'organisateur' || role === 'admin') && (
+          <div className="bg-[var(--surface)] rounded-lg shadow-md p-4 border border-[#111]">
+            <div className="text-2xl mb-1">⏰</div>
+            <p className="text-[var(--text-muted)] text-xs mb-1">À venir</p>
+            <p className="text-3xl font-bold text-[var(--brand)]">{stats.upcomingEvents}</p>
+          </div>
+        )}
+
+        {/* Favoris - pour tous */}
         <div className="bg-[var(--surface)] rounded-lg shadow-md p-4 border border-[#111]">
-          <div className="text-2xl mb-1">📅</div>
-          <p className="text-[var(--text-muted)] text-xs mb-1">Événements créés</p>
-          <p className="text-3xl font-bold text-[var(--brand)]">{stats.createdEvents}</p>
+          <div className="text-2xl mb-1">⭐</div>
+          <p className="text-[var(--text-muted)] text-xs mb-1">Favoris</p>
+          <p className="text-3xl font-bold text-[var(--brand)]">{stats.favorites || 0}</p>
         </div>
-        <div className="bg-[var(--surface)] rounded-lg shadow-md p-4 border border-[#111]">
-          <div className="text-2xl mb-1">⏰</div>
-          <p className="text-[var(--text-muted)] text-xs mb-1">À venir</p>
-          <p className="text-3xl font-bold text-[var(--brand)]">{stats.upcomingEvents}</p>
-        </div>
+
+        {/* Inscrits reçus - pour organisateurs uniquement */}
+        {role === 'organisateur' && (
+          <div className="bg-[var(--surface)] rounded-lg shadow-md p-4 border border-[#111]">
+            <div className="text-2xl mb-1">✅</div>
+            <p className="text-[var(--text-muted)] text-xs mb-1">Inscrits reçus</p>
+            <p className="text-3xl font-bold text-[var(--brand)]">{stats.totalRegistrations || 0}</p>
+          </div>
+        )}
       </div>
 
       {/* Actions principales */}
@@ -306,31 +336,16 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {/* Bouton Créer Événement - Organisateurs */}
-      {role === 'organisateur' && (
+      {/* Bouton Créer Événement - Organisateurs et Admins */}
+      {(role === 'organisateur' || role === 'admin') && (
         <div className="bg-[var(--brand)] rounded-lg p-8 text-black mb-8">
           <h2 className="text-2xl font-bold mb-2">Créer un nouvel événement</h2>
-          <p className="text-[var(--text-muted)] mb-6">
+          <p className="mb-6" style={{ color: '#1a1a1a' }}>
             Partagez votre événement avec la communauté Meetral
           </p>
           <Link
             href="/events/create"
-            className="px-6 py-3 bg-black/5 text-black rounded-lg font-bold hover:opacity-95 transition inline-block"
-          >
-            + Créer un événement
-          </Link>
-        </div>
-      )}
-
-      {role === 'admin' && (
-        <div className="bg-[var(--brand)] rounded-lg p-8 text-black mb-8">
-          <h2 className="text-2xl font-bold mb-2">Créer un nouvel événement</h2>
-          <p className="text-[var(--text-muted)] mb-6">
-            En tant qu'admin, vous pouvez créer et modérer tous les événements
-          </p>
-          <Link
-            href="/events/create"
-            className="px-6 py-3 bg-black/5 text-black rounded-lg font-bold hover:opacity-95 transition inline-block"
+            className="px-6 py-3 bg-black text-white rounded-lg font-bold hover:bg-black/90 transition inline-block"
           >
             + Créer un événement
           </Link>
@@ -352,66 +367,66 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Statistiques */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+      {/* Statistiques synthétiques et informations compte */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
         <div className="bg-[var(--surface)] rounded-lg shadow-md p-6 border border-[#111]">
-          <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4">Statistiques</h3>
-          <div className="space-y-3">
-            <div className="flex justify-between items-center pb-3 border-b">
-              <span className="text-[var(--text-muted)]">Événements auxquels vous participez</span>
-              <span className="text-2xl font-bold text-[var(--brand)]">0</span>
+          <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4">Aperçu détaillé</h3>
+          <div className="space-y-3 text-sm">
+            <div className="flex justify-between items-center pb-3 border-b border-[#222]">
+              <span className="text-[var(--text-muted)]">Participations</span>
+              <span className="text-2xl font-bold text-[var(--brand)]">{stats.participations || 0}</span>
             </div>
-            <div className="flex justify-between items-center pb-3 border-b">
-              <span className="text-[var(--text-muted)]">Événements à venir</span>
-              <span className="text-2xl font-bold text-[var(--brand)]">0</span>
+            <div className="flex justify-between items-center pb-3 border-b border-[#222]">
+              <span className="text-[var(--text-muted)]">Participations à venir</span>
+              <span className="text-2xl font-bold text-[var(--brand)]">{stats.upcomingParticipations || 0}</span>
             </div>
-            <div className="flex justify-between items-center pb-3 border-b">
+            <div className="flex justify-between items-center pb-3 border-b border-[#222]">
               <span className="text-[var(--text-muted)]">Favoris</span>
-              <span className="text-2xl font-bold text-[var(--brand)]">0</span>
+              <span className="text-2xl font-bold text-[var(--brand)]">{stats.favorites || 0}</span>
             </div>
-            {role === 'organisateur' && (
-              <>
-                <div className="flex justify-between items-center pb-3 border-b">
-                  <span className="text-[var(--text-muted)]">Événements créés</span>
-                  <span className="text-2xl font-bold text-[var(--brand)]">0</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-[var(--text-muted)]">Total des participants</span>
-                  <span className="text-2xl font-bold text-[var(--brand)]">0</span>
-                </div>
-              </>
+            {(role === 'organisateur' || role === 'admin') && (
+              <div className="flex justify-between items-center pb-3 border-b border-[#222]">
+                <span className="text-[var(--text-muted)]">Événements créés</span>
+                <span className="text-2xl font-bold text-[var(--brand)]">{stats.createdEvents || 0}</span>
+              </div>
             )}
-            {role === 'admin' && (
-              <>
-                <div className="flex justify-between items-center pb-3 border-b">
-                  <span className="text-[var(--text-muted)]">Total des événements</span>
-                  <span className="text-2xl font-bold text-[var(--brand)]">0</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-[var(--text-muted)]">Total des inscriptions</span>
-                  <span className="text-2xl font-bold text-[var(--brand)]">0</span>
-                </div>
-              </>
+            {(role === 'organisateur' || role === 'admin') && (
+              <div className="flex justify-between items-center pb-3 border-b border-[#222]">
+                <span className="text-[var(--text-muted)]">Événements à venir</span>
+                <span className="text-2xl font-bold text-[var(--brand)]">{stats.upcomingEvents || 0}</span>
+              </div>
+            )}
+            {role === 'organisateur' && (
+              <div className="flex justify-between items-center pb-3 border-b border-[#222]">
+                <span className="text-[var(--text-muted)]">Inscriptions reçues</span>
+                <span className="text-2xl font-bold text-[var(--brand)]">{stats.totalRegistrations || 0}</span>
+              </div>
             )}
           </div>
         </div>
 
         <div className="bg-[var(--surface)] rounded-lg shadow-md p-6 border border-[#111]">
           <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4">Informations du compte</h3>
-          <div className="space-y-3">
+          <div className="space-y-3 text-sm">
             <div>
-              <p className="text-sm text-[var(--text-muted)]">Email</p>
+              <p className="text-[var(--text-muted)]">Email</p>
               <p className="font-semibold text-[var(--text-primary)]">{user?.email}</p>
             </div>
             <div>
-              <p className="text-sm text-[var(--text-muted)]">Rôle</p>
+              <p className="text-[var(--text-muted)]">Rôle</p>
               <p className="font-semibold text-[var(--text-primary)] capitalize">
                 {role || 'Non défini'}
               </p>
             </div>
+            {profile?.phone && (
+              <div>
+                <p className="text-[var(--text-muted)]">Téléphone</p>
+                <p className="font-semibold text-[var(--text-primary)]">{profile.phone}</p>
+              </div>
+            )}
             <Link
               href="/profile"
-              className="text-[var(--brand)] font-medium hover:underline text-sm"
+              className="text-[var(--brand)] font-medium hover:underline"
             >
               Modifier mon profil →
             </Link>

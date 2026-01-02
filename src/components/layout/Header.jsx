@@ -7,8 +7,8 @@ import { useTranslation } from '@/lib/i18n';
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
   const [session, setSession] = useState(null);
+  const [displayName, setDisplayName] = useState('');
   const { t } = useTranslation();
 
   useEffect(() => {
@@ -17,6 +17,19 @@ export default function Header() {
       const { data } = await supabase.auth.getSession();
       if (!mounted) return;
       setSession(data?.session ?? null);
+      
+      // Récupérer le display_name depuis public.users
+      if (data?.session?.user) {
+        const { data: profile } = await supabase
+          .from('users')
+          .select('display_name')
+          .eq('user_id', data.session.user.id)
+          .single();
+        
+        if (mounted) {
+          setDisplayName(profile?.display_name || data.session.user.email || '');
+        }
+      }
     })();
 
     const { subscription } = supabase.auth.onAuthStateChange((_event, sess) => {
@@ -52,8 +65,8 @@ export default function Header() {
             </Link>
           ) : (
             <Link href="/profile" className="text-sm px-2 py-2 rounded-full bg-[var(--surface)] border border-[#222] flex items-center gap-2 hover:bg-[#0f0f0f] transition">
-              <div className="w-8 h-8 rounded-full bg-[var(--brand)] text-black flex items-center justify-center font-semibold">{(session?.user?.email || '').charAt(0)?.toUpperCase()}</div>
-              <span className="hidden sm:inline text-[var(--text-primary)]">{t('profile')}</span>
+              <div className="w-8 h-8 rounded-full bg-[var(--brand)] text-black flex items-center justify-center font-semibold">{(displayName || session?.user?.email || '').charAt(0)?.toUpperCase()}</div>
+              <span className="hidden sm:inline text-[var(--text-primary)]">{displayName || t('profile')}</span>
             </Link>
           )}
         </nav>

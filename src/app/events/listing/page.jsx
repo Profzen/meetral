@@ -104,6 +104,7 @@ export default function EventsListingPage() {
       const res = await fetch(`/api/events/smart-ranked?${query}`);
       const json = await res.json();
       let list = json?.events ?? [];
+      console.log('Listing events from smart-ranked:', list);
 
       if (!Array.isArray(list) || list.length < 20) {
         const res2 = await fetch('/api/events');
@@ -286,9 +287,15 @@ export default function EventsListingPage() {
       {viewMode === 'grid' && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {isLoading ? (
-            <div className="col-span-full text-center py-12">
-              <p className="text-[var(--text-muted)] text-lg">Chargement des événements...</p>
-            </div>
+            Array.from({ length: 8 }).map((_, idx) => (
+              <div key={idx} className="animate-pulse bg-[var(--surface)] rounded-lg border border-[#111] p-4 space-y-3">
+                <div className="h-36 bg-[#111] rounded" />
+                <div className="h-4 bg-[#111] rounded w-3/4" />
+                <div className="h-3 bg-[#111] rounded w-1/2" />
+                <div className="h-2 bg-[#111] rounded w-full" />
+                <div className="h-2 bg-[#111] rounded w-5/6" />
+              </div>
+            ))
           ) : filteredEvents.length > 0 ? (
             filteredEvents.slice(0, visibleCount).map((event) => (
               <EventCard key={event.id} event={event} onOpen={() => setViewEvent(event)} />
@@ -311,9 +318,17 @@ export default function EventsListingPage() {
       {viewMode === 'list' && (
         <div className="space-y-4">
           {isLoading ? (
-            <div className="text-center py-12 bg-[var(--surface)] rounded-lg border border-[#111]">
-              <p className="text-[var(--text-muted)] text-base sm:text-lg">Chargement des événements...</p>
-            </div>
+            Array.from({ length: 6 }).map((_, idx) => (
+              <div key={idx} className="animate-pulse bg-[var(--surface)] rounded-lg border border-[#111] p-4 flex gap-4">
+                <div className="w-32 h-24 bg-[#111] rounded" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 bg-[#111] rounded w-2/3" />
+                  <div className="h-3 bg-[#111] rounded w-1/2" />
+                  <div className="h-2 bg-[#111] rounded w-4/5" />
+                  <div className="h-2 bg-[#111] rounded w-3/4" />
+                </div>
+              </div>
+            ))
           ) : filteredEvents.length > 0 ? (
             filteredEvents.slice(0, visibleCount).map((event) => (
               <div
@@ -321,11 +336,11 @@ export default function EventsListingPage() {
                 className="bg-[var(--surface)] rounded-lg shadow-md p-4 flex flex-col sm:flex-row gap-4 hover:shadow-lg transition border border-[#111]"
               >
                 <img
-                  src={event.cover_url || 'https://via.placeholder.com/600x400?text=Event'}
+                  src={event.cover_url || 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22600%22 height=%22400%22 viewBox=%220 0 600 400%22%3E%3Crect width=%22600%22 height=%22400%22 fill=%22%23222%22/%3E%3Ctext x=%22300%22 y=%22205%22 fill=%22%23aaa%22 font-size=%2232%22 text-anchor=%22middle%22 font-family=%22Arial,sans-serif%22%3EEvent%3C/text%3E%3C/svg%3E'}
                   alt={event.title}
                   className="w-full sm:w-32 h-40 sm:h-32 object-cover rounded-md flex-shrink-0"
                   onError={(e) => {
-                    e.target.src = 'https://via.placeholder.com/600x400?text=Event';
+                    e.target.src = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22600%22 height=%22400%22 viewBox=%220 0 600 400%22%3E%3Crect width=%22600%22 height=%22400%22 fill=%22%23222%22/%3E%3Ctext x=%22300%22 y=%22205%22 fill=%22%23aaa%22 font-size=%2232%22 text-anchor=%22middle%22 font-family=%22Arial,sans-serif%22%3EEvent%3C/text%3E%3C/svg%3E';
                   }}
                 />
                 <div className="flex-1 min-w-0">
@@ -343,7 +358,7 @@ export default function EventsListingPage() {
                     <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs sm:text-sm text-[var(--text-muted)]">
                     <div className="flex items-center">
                       <span className="mr-2">📅</span>
-                      <span className="text-[var(--text-primary)]">{new Date(event.date).toLocaleDateString('fr-FR')}</span>
+                      <span className="text-[var(--text-primary)]">{event.date && event.start_time ? new Date(`${event.date}T${event.start_time}`).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' }) : event.date}</span>
                     </div>
                     <div className="flex items-center">
                       <span className="mr-2">📍</span>
