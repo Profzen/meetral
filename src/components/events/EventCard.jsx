@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n';
 import { supabase } from '@/lib/supabaseClient';
+import formatCurrency from '@/utils/formatCurrency';
 
 export default function EventCard({ event, onOpen }) {
   const { t } = useTranslation();
@@ -114,7 +115,7 @@ export default function EventCard({ event, onOpen }) {
   return (
     <article className="bg-[var(--surface)] rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 flex flex-col h-full border border-[#111]">
       {/* Image Container */}
-      <div className="relative w-full h-56 bg-[#0b0b0b] overflow-hidden flex-shrink-0 rounded-b-none">
+      <div className="relative w-full bg-[#0b0b0b] overflow-hidden flex-shrink-0 rounded-b-none" style={{ aspectRatio: '16/9' }}>
         <img
           src={imageUrl}
           alt={title}
@@ -141,7 +142,7 @@ export default function EventCard({ event, onOpen }) {
         {/* Price Badge - Top Right */}
         {isPaid && price && (
           <div className="absolute top-2 right-2 px-3 py-1 bg-[var(--brand)] text-black rounded-full text-sm font-bold shadow-md">
-            {price}€
+            {formatCurrency(price)}
           </div>
         )}
       </div>
@@ -198,13 +199,13 @@ export default function EventCard({ event, onOpen }) {
         {/* Actions - Fixed at bottom */}
         <div className="flex gap-2 pt-3 border-t border-[#111]">
           <button
-            onClick={() => onOpen && onOpen(event)}
+            onClick={() => onOpen && onOpen(event, 'details')}
             className="flex-1 px-3 py-2 text-center bg-[var(--brand)] text-black rounded font-medium hover:opacity-95 transition text-sm"
           >
             {t('see_more')}
           </button>
           <button
-            onClick={() => onOpen && onOpen(event)}
+            onClick={() => onOpen && onOpen(event, 'register')}
             className="flex-1 px-3 py-2 text-center bg-[#0f0f0f] border border-[#222] text-[var(--text-primary)] rounded font-medium hover:bg-[#1b1b1b] transition text-sm"
           >
             {t('register')}

@@ -1,11 +1,12 @@
 'use client';
 import { useState } from 'react';
+import formatCurrency from '@/utils/formatCurrency';
 import { jsPDF } from 'jspdf';
 import QRCode from 'qrcode';
 import formatDate from '@/utils/formatDate';
 import { supabase } from '@/lib/supabaseClient';
 
-export default function EventModal({ event, onClose, onRegistrationSuccess }) {
+export default function EventModal({ event, onClose, onRegistrationSuccess, mode = 'details' }) {
   const [joining, setJoining] = useState(false);
   const [form, setForm] = useState({ name: '', email: '', count: 1 });
   if (!event) return null;
@@ -138,11 +139,11 @@ export default function EventModal({ event, onClose, onRegistrationSuccess }) {
           {/* Left Column - Image & Details */}
           <div className="flex-1 lg:flex-[1.2] flex flex-col gap-6">
             {/* Large Image */}
-            <div className="w-full rounded-lg overflow-hidden bg-[#0b0b0b] flex-shrink-0">
+            <div className="w-full rounded-lg overflow-hidden bg-[#0b0b0b] flex-shrink-0" style={{ aspectRatio: '16/9' }}>
               <img 
                 src={imageUrl} 
                 alt={event.title} 
-                className="w-full h-64 lg:h-80 object-cover"
+                className="w-full h-full object-cover"
                 onError={(e) => {
                   e.target.src = 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22600%22 height=%22400%22 viewBox=%220 0 600 400%22%3E%3Crect width=%22600%22 height=%22400%22 fill=%22%23222%22/%3E%3Ctext x=%22300%22 y=%22205%22 fill=%22%23aaa%22 font-size=%2232%22 text-anchor=%22middle%22 font-family=%22Arial,sans-serif%22%3EEvent%3C/text%3E%3C/svg%3E';
                 }}
@@ -171,7 +172,7 @@ export default function EventModal({ event, onClose, onRegistrationSuccess }) {
               )}
               {isPaid && event.price && (
                 <span className="inline-block px-3 py-1 bg-[var(--brand)] text-black rounded-full text-sm font-semibold">
-                  {event.price}€
+                  {formatCurrency(event.price)}
                 </span>
               )}
             </div>
@@ -244,10 +245,12 @@ export default function EventModal({ event, onClose, onRegistrationSuccess }) {
               </div>
             </div>
 
-            {/* Registration Form */}
-            {!isFull && (
+            {/* Registration Form - Only show if not full and (mode is 'register' or no specific mode) */}
+            {!isFull && (mode === 'register' || mode === 'details') && (
               <div className="bg-[#0f0f0f] p-4 rounded-lg border border-[#222]">
-                <h3 className="text-sm font-semibold text-[var(--text-muted)] uppercase mb-4">S'inscrire</h3>
+                <h3 className="text-sm font-semibold text-[var(--text-muted)] uppercase mb-4">
+                  {mode === 'register' ? "S'inscrire maintenant" : "S'inscrire"}
+                </h3>
                 <div className="space-y-3">
                   <div>
                     <label className="block text-sm text-[var(--text-muted)] mb-1">Nom</label>

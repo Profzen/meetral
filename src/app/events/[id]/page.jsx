@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import formatCurrency from '@/utils/formatCurrency';
 import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n';
 
@@ -110,7 +111,7 @@ export default function EventDetailPage({ params }) {
               <div>
                 <p className="text-sm text-[var(--text-muted)]">Tarif</p>
                 <p className="font-semibold text-[var(--text-primary)]">
-                  {eventDetails.isPaid ? `${eventDetails.price}€` : 'Gratuit'}
+                  {eventDetails.isPaid ? formatCurrency(eventDetails.price) : 'Gratuit'}
                 </p>
               </div>
             </div>

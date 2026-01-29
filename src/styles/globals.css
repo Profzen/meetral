@@ -2,10 +2,11 @@
 @import './tailwind.css';
 
 :root{
-  --brand: #D4AF37; /* Gold */
-  --brand-dark: #B8860B;
-  --bg: #070707; /* Near true black */
-  --surface: #0b0b0b; /* Slightly lighter than bg */
+  /* Warm palette tuned for XOF themed branding */
+  --brand: #fbbf24; /* golden (warm & premium) */
+  --brand-dark: #d97706; /* darker gold/orange */
+  --bg: #070707; /* near black for dark theme */
+  --surface: #0b0b0b;
   --text-primary: #f8f8f8;
   --text-muted: #9ca3af;
   /* status colors */

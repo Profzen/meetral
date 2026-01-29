@@ -65,6 +65,12 @@ export default function LoginPage() {
             </button>
             <button type="button" onClick={() => router.push('/auth/register')} className="text-sm text-[var(--text-muted)]">Créer un compte</button>
           </div>
+
+          <div className="text-center mt-4">
+            <button type="button" onClick={() => router.push('/auth/forgot')} className="text-sm text-[var(--brand)] hover:underline">
+              Mot de passe oublié ?
+            </button>
+          </div>
         </form>
       </div>
     </div>

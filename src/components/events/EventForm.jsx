@@ -13,6 +13,7 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
+import formatCurrency from '@/utils/formatCurrency';
 
 export default function EventForm({ initialEvent = null, eventId = null, onSuccess = null }) {
   const [form, setForm] = useState({
@@ -23,8 +24,8 @@ export default function EventForm({ initialEvent = null, eventId = null, onSucce
     place: '',
     is_free: false,
     freefood: false,
-    price: null,
-    capacity: 0,
+  price: null,
+  capacity: '',
   });
   const [coverFile, setCoverFile] = useState(null);
   const [coverPreview, setCoverPreview] = useState(null);
@@ -36,7 +37,7 @@ export default function EventForm({ initialEvent = null, eventId = null, onSucce
   useEffect(() => {
     if (initialEvent) {
       const ev = initialEvent;
-      setForm({
+        setForm({
         title: ev.title ?? '',
         description: ev.description ?? '',
         date: ev.date ? ev.date.split('T')[0] : '',
@@ -44,8 +45,8 @@ export default function EventForm({ initialEvent = null, eventId = null, onSucce
         place: ev.place ?? '',
         is_free: !!ev.is_free,
         freefood: !!ev.freefood,
-        price: ev.price ?? null,
-        capacity: ev.capacity ?? 0,
+          price: ev.price ?? null,
+          capacity: ev.capacity ?? '',
       });
       setCoverPreview(ev.cover_url ?? null);
       setMode('edit');
@@ -74,7 +75,7 @@ export default function EventForm({ initialEvent = null, eventId = null, onSucce
             is_free: !!ev.is_free,
             freefood: !!ev.freefood,
             price: ev.price ?? null,
-            capacity: ev.capacity ?? 0,
+            capacity: ev.capacity ?? '',
           });
           setCoverPreview(ev.cover_url ?? null);
           setMode('edit');
@@ -91,7 +92,19 @@ export default function EventForm({ initialEvent = null, eventId = null, onSucce
 
   function onChange(e) {
     const { name, value, type, checked } = e.target;
-    setForm(s => ({ ...s, [name]: type === 'checkbox' ? checked : value }));
+    // coerce number inputs to strings/ints at the right time
+    if (type === 'checkbox') {
+      setForm(s => ({ ...s, [name]: checked, ...(name === 'is_free' && checked ? { price: null } : {}) }));
+      return;
+    }
+
+    if (e.target.type === 'number') {
+      // keep as string for controlled input but prevent non-numeric
+      setForm(s => ({ ...s, [name]: value }));
+      return;
+    }
+
+    setForm(s => ({ ...s, [name]: value }));
   }
 
   function onFileChange(e) {
@@ -185,7 +198,9 @@ export default function EventForm({ initialEvent = null, eventId = null, onSucce
         }
       }
 
-      const payload = { ...form, cover_url, price: form.is_free ? 0 : Number(form.price || 0), capacity: Number(form.capacity || 0) };
+  // Ensure price is stored as integer XOF (no decimals)
+  const priceInt = form.is_free ? 0 : Math.round(Number(form.price || 0));
+  const payload = { ...form, cover_url, price: priceInt, capacity: Number(form.capacity || 0) };
 
       if (mode === 'create') {
         const res = await fetch('/api/events', {
@@ -273,8 +288,13 @@ export default function EventForm({ initialEvent = null, eventId = null, onSucce
         <div>
           {!form.is_free && (
             <>
-              <label className="block text-sm font-medium text-[var(--text-muted)]">Prix (€)</label>
-              <input name="price" type="number" min="0" step="0.01" value={form.price ?? ''} onChange={onChange} className="mt-1 block w-full rounded border border-[#222] bg-[#0f0f0f] text-[var(--text-primary)] px-3 py-2" />
+              <label className="block text-sm font-medium text-[var(--text-muted)]">Prix (XOF)</label>
+              <div className="flex items-center gap-2">
+                <input name="price" type="number" min="0" step="1" value={form.price ?? ''} onChange={onChange} className="mt-1 block w-full rounded border border-[#222] bg-[#0f0f0f] text-[var(--text-primary)] px-3 py-2" />
+                <div className="text-sm text-[var(--text-muted)] w-36">
+                  {form.price !== null && form.price !== '' ? <span>{formatCurrency(Number(form.price || 0))}</span> : <span className="italic">Aucun</span>}
+                </div>
+              </div>
             </>
           )}
         </div>
@@ -282,6 +302,9 @@ export default function EventForm({ initialEvent = null, eventId = null, onSucce
 
       <div>
         <label className="block text-sm font-medium">Image de couverture (optionnel)</label>
+        <p className="text-xs text-[var(--text-muted)] mt-1 mb-2">
+          💡 Pour un meilleur rendu, utilisez des images au format <strong>16:9</strong> (ex: 1920x1080, 1600x900, etc.)
+        </p>
         <input type="file" accept="image/*" onChange={onFileChange} className="mt-1 block w-full text-[var(--text-primary)]" />
         {coverPreview && <img src={coverPreview} alt="preview" className="mt-2 w-48 h-28 object-cover rounded" />}
       </div>

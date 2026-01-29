@@ -1,106 +1,72 @@
-﻿## Supabase Storage - Bucket `events`
-We use a storage bucket named `events` for event cover uploads. If uploads fail with `Bucket not found`:
+﻿# Meetral
 
-1. Go to the Supabase Console → Storage → Create a new bucket named `events` (public).
-2. Make the bucket public or configure the appropriate signed URL access for uploads and public URLs.
-3. If you use a different bucket name, update `src/components/events/EventForm.jsx` and the server code accordingly.
+Application d'événements (Next.js App Router + Supabase). Tous les montants sont en XOF (entiers) et les flux d'auth utilisent Supabase (signup avec confirmation, mot de passe oublié / reset).
 
-### Allow client uploads via storage policy
+## Démarrage rapide
+- Installer les dépendances :
+	```powershell
+	npm install
+	```
+- Créer `.env.local` :
+	```dotenv
+	NEXT_PUBLIC_SUPABASE_URL=https://<votre-projet>.supabase.co
+	NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key>
+	SUPABASE_SERVICE_ROLE_KEY=<service-role-key>
+	# Optionnel DB pour migrations
+	SUPABASE_DB_URL=postgres://postgres:password@db.xxx.supabase.co:5432/postgres
+	```
+- Lancer les tests unitaires :
+	```powershell
+	npx vitest run
+	```
+- Démarrer le serveur dev :
+	```powershell
+	npm run dev
+	```
 
-If you want to allow the client to upload files directly (without server relay), you must ensure the `storage.objects` RLS policy allows authenticated users to insert rows. Run this SQL in the Supabase SQL editor:
+## Configuration Supabase
+- **URLs** (Dashboard → Authentication → URL Configuration)
+	- Site URL: votre URL (ex: https://meetral.vercel.app ou http://localhost:3000 en local)
+	- Redirect URLs: ajouter au minimum `/auth/confirm` et `/auth/reset` (hash ou query acceptés), plus `/auth/login` si vous redirigez après confirmation.
+- **Templates email** : garder `{{ .ConfirmationURL }}` dans Confirm Signup et Reset Password (il pointera vers les URLs ci-dessus).
+- **Stockage** : créer un bucket `events` (public ou règles adaptées). Si vous changez de nom, ajustez les appels d'upload.
+- **Synchronisation users** : triggers SQL recommandés dans `prisma/migrations/2025-12-19_auto_create_public_user.sql` et `2025-12-19_migrate_existing_users.sql` pour peupler `public.users` depuis `auth.users`.
 
-```sql
--- Allow authenticated users to insert objects
-CREATE POLICY allow_insert_authenticated ON storage.objects
-FOR INSERT
-TO authenticated
-WITH CHECK (auth.role() = 'authenticated');
+## Migrations base de données
+- Commande :
+	```powershell
+	npm run migrate:db
+	```
+- Variables utilisées par le script : `PG_CONNECTION` > `DATABASE_URL` > `SUPABASE_DB_URL`.
+- Migrations clés :
+	- `2025-12-12_add_lang_price_capacity.sql` (lang, price, capacity)
+	- `2025-12-19_auto_create_public_user.sql` (trigger `public.users`)
+	- `2025-12-19_migrate_existing_users.sql` (rattrapage des users existants)
+	- Indexes/perf: `2025-12-16_add_performance_indexes.sql`
 
--- Allow users to read objects (if desired)
-CREATE POLICY allow_select_authenticated ON storage.objects
-FOR SELECT
-TO authenticated
-USING (true);
-```
+## Architecture et points importants
+- **Stack** : Next.js (App Router), Supabase (auth + db + storage), Tailwind/CSS vars, Vitest, Playwright (optionnel).
+- **Dossiers clés** :
+	- `src/app` : pages (auth/confirm, auth/forgot, auth/reset, events listing/detail/create, dashboard, admin, etc.)
+	- `src/components` : EventCard, EventForm, Header, modales, UI partagées
+	- `src/lib` : clients Supabase (`supabaseClient`, `supabaseAdmin`), i18n, perf metrics
+	- `src/server/api` : routes Next (ex: `/api/events`)
+	- `prisma/migrations` : scripts SQL
+	- `tests` : unit (Vitest) et e2e (Playwright)
+- **Auth flows** :
+	- Confirmation : `/auth/confirm` accepte token dans hash ou query, redirige vers `/auth/login` après succès.
+	- Mot de passe oublié : `/auth/forgot` envoie un email; `/auth/reset` accepte token hash ou query et met à jour le mot de passe.
+- **Monnaie** : XOF affiché via `formatCurrency`, prix saisis en entiers (step=1) et envoyés en entiers au serveur.
 
-Note: For most setups, it's simpler to mark the bucket `events` public in the Supabase Console and use the client to upload as an authenticated user. If you prefer stricter control, keep the bucket private and use server-side uploads (our `/api/upload` route uses service role and avoids client storage policy constraints).
+## Tests
+- Unitaires : `npx vitest run`
+- E2E (optionnel) : installer Playwright (`npx playwright install`) puis `npm run test:e2e`
 
-## Debugging API & Health
+## Dépannage actif
+- `/api/events` ou `/api/health` en erreur : vérifier que le serveur dev tourne et que `SUPABASE_SERVICE_ROLE_KEY` est présent dans `.env.local`.
+- Upload d'image échoue : confirmer l'existence du bucket `events` et ses droits (public ou politiques RLS adaptées).
 
-If the UI reports 404 on `/api/events` or request fails, verify the dev server is running and reachable:
-
-1. Health: Open `http://localhost:3000/api/health` (or proper dev port). Should return `{ ok: true }`.
-2. Events: GET `http://localhost:3000/api/events` should return a JSON list or fallback samples.
-3. If these return 404 or 500, restart dev server and check terminal logs for errors. Also ensure `SUPABASE_SERVICE_ROLE_KEY` is defined in `.env.local` so `supabaseAdmin` can initialize.
-
-
-# Meetral
-
-Structure initiale du projet Meetral (Next.js + Supabase).
-
-## Database migration
-
-We added a SQL migration file to add `lang` to the `users` table and `price`/`capacity` to the `events` table.
-Run the migration with the following command (powershell):
-
-```powershell
-npm run migrate:db
-```
-
-The script will look for the DB connection string in the following environment variables in this order:
-- `PG_CONNECTION` (explicit override)
-- `DATABASE_URL` (common name)
-- `SUPABASE_DB_URL` or `SUPABASE_DATABASE_URL` (custom name)
-
-If you use Supabase and your `.env.local` doesn’t currently include the DB connection string, get it from the Supabase Console:
-
-1. Supabase Console → Project → Settings → Database → Connection string
-2. Copy the connection string (`postgres://...` or `postgresql://...`) and add it to `.env.local`:
-
-```dotenv
-SUPABASE_DB_URL=postgres://postgres:password@db.abcd.supabase.co:5432/postgres
-```
-
-Then run:
-
-```powershell
-$env:PG_CONNECTION = $env:SUPABASE_DB_URL
-npm run migrate:db
-```
-
-Alternatively, use the Supabase SQL Editor UI:
-
-1. Supabase Console → Database → SQL Editor → New Query
-2. Paste the SQL content of `prisma/migrations/2025-12-12_add_lang_price_capacity.sql`
-3. Click Run
-
-## Internationalization (i18n) fallback
-
-We implemented a minimal i18n helper and translations for 'fr' and 'en' using `src/lib/i18n.js` and `UserContext`. It provides a `useTranslation()` hook.
-
-Change the language in the Profile page and it will persist in localStorage and try to persist in the `users.lang` column when you're logged in.
-
-## Tests (unit & e2e)
-
-We added a basic test setup using `vitest` for unit tests and `playwright` for e2e.
-
-- Run unit tests:
-
-```bash
-npm run test:unit
-```
-
-- Run e2e tests (Playwright requires browsers installation; run the following once):
-
-```bash
-npx playwright install
-npm run test:e2e
-```
-
-Unit tests added:
-- `tests/unit/components/EventForm.test.jsx` — covers basic form behavior and submit call
-- `tests/unit/pages/OrganizerDashboard.test.jsx` — verify organizer event list rendering
-- `tests/unit/pages/EventsListing.test.jsx` — verify listing page fetch and display
-
-If you want more advanced flows (sign-in + create event + dashboard retrieval), we can expand e2e tests next.
+## Notes rapides pour l'équipe
+- Header mobile montre le `display_name` du profil Supabase après auth; rechargement possible en cas de cache local.
+- Les prix et capacities sont coercis côté client et côté API pour éviter les flottants.
 

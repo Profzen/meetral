@@ -32,6 +32,7 @@ export default function HomePage() {
   const [q, setQ] = useState('');
   const [filter, setFilter] = useState('all');
   const [viewEvent, setViewEvent] = useState(null);
+  const [viewEventMode, setViewEventMode] = useState('details');
   const [loading, setLoading] = useState(true);
   const { t } = useTranslation();
 
@@ -207,7 +208,7 @@ export default function HomePage() {
                     .sort((a, b) => new Date(a.date) - new Date(b.date) || ((b.registered / (b.capacity || 1)) - (a.registered / (a.capacity || 1))))
                     .slice(0, 20)
                     .map((ev) => (
-                      <EventCard key={ev.id} event={ev} onOpen={() => setViewEvent(ev)} />
+                      <EventCard key={ev.id} event={ev} onOpen={(evt, mode) => { setViewEvent(evt); setViewEventMode(mode || 'details'); }} />
                     ))}
                 </div>
                 <div className="mt-6 flex justify-center">
@@ -229,6 +230,7 @@ export default function HomePage() {
             eventCache.clear('home_events');
             fetchEvents();
           }}
+          mode={viewEventMode}
         />
       )}
     </div>

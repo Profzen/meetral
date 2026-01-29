@@ -33,7 +33,24 @@ export default function Header() {
     })();
 
     const { subscription } = supabase.auth.onAuthStateChange((_event, sess) => {
+      // sess may be the new session object (or null). Update and re-fetch profile
       setSession(sess ?? null);
+      (async () => {
+        try {
+          if (!sess?.user) {
+            setDisplayName('');
+            return;
+          }
+          const { data: profile } = await supabase
+            .from('users')
+            .select('display_name')
+            .eq('user_id', sess.user.id)
+            .single();
+          setDisplayName(profile?.display_name || sess.user.email || '');
+        } catch (e) {
+          console.error('Header fetch profile on auth change', e);
+        }
+      })();
     });
 
     return () => subscription?.unsubscribe();
@@ -104,13 +121,23 @@ export default function Header() {
           >
             Mon dashboard
           </Link>
-          <Link 
-            href="/auth/login" 
-            className="block w-full text-sm px-4 py-2 rounded-md bg-[var(--brand)] text-black font-medium text-center transition hover:opacity-95"
-            onClick={() => setMobileMenuOpen(false)}
-          >
-            Connexion
-          </Link>
+          {session ? (
+            <Link 
+              href="/profile" 
+              className="block w-full text-sm px-4 py-2 rounded-md bg-[var(--brand)] text-black font-medium text-center transition hover:opacity-95"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              {displayName || 'Mon profil'}
+            </Link>
+          ) : (
+            <Link 
+              href="/auth/login" 
+              className="block w-full text-sm px-4 py-2 rounded-md bg-[var(--brand)] text-black font-medium text-center transition hover:opacity-95"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Connexion
+            </Link>
+          )}
         </nav>
       )}
     </header>

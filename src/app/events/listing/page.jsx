@@ -1,6 +1,7 @@
  'use client';
 
 import { useState, useEffect } from 'react';
+import formatCurrency from '@/utils/formatCurrency';
 import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n';
 import { supabase } from '@/lib/supabaseClient';
@@ -16,6 +17,7 @@ export default function EventsListingPage() {
   const [viewMode, setViewMode] = useState('grid');
   const [sortBy, setSortBy] = useState('date');
   const [viewEvent, setViewEvent] = useState(null);
+  const [viewEventMode, setViewEventMode] = useState('details');
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [userFavorites, setUserFavorites] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -298,7 +300,7 @@ export default function EventsListingPage() {
             ))
           ) : filteredEvents.length > 0 ? (
             filteredEvents.slice(0, visibleCount).map((event) => (
-              <EventCard key={event.id} event={event} onOpen={() => setViewEvent(event)} />
+              <EventCard key={event.id} event={event} onOpen={(evt, mode) => { setViewEvent(evt); setViewEventMode(mode || 'details'); }} />
             ))
           ) : (
             <div className="col-span-full text-center py-12">
@@ -366,7 +368,7 @@ export default function EventsListingPage() {
                     </div>
                     <div className="flex items-center">
                       <span className="mr-2">💰</span>
-                      <span>{event.isPaid ? `${event.price}€` : 'Gratuit'}</span>
+                      <span>{event.isPaid ? formatCurrency(event.price) : 'Gratuit'}</span>
                     </div>
                     <div className="flex items-center">
                       <span className="mr-2">👥</span>
@@ -397,6 +399,7 @@ export default function EventsListingPage() {
           event={viewEvent} 
           onClose={() => setViewEvent(null)} 
           onRegistrationSuccess={refreshEvents}
+          mode={viewEventMode}
         />
       )}
     </section>

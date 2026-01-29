@@ -113,6 +113,9 @@ export default function AdminEventEditModal({ event, onClose }) {
 
           <div className="space-y-3">
             <label className="block text-sm text-[var(--text-muted)]">Image de couverture</label>
+            <p className="text-xs text-[var(--text-muted)] mb-2">
+              💡 Pour un meilleur rendu, utilisez des images au format <strong>16:9</strong> (ex: 1920x1080, 1600x900)
+            </p>
             {coverPreview && <img src={coverPreview} alt="Cover preview" className="w-full h-40 object-cover rounded border border-[#222]" />}
             <input type="file" accept="image/*" onChange={onFileChange} className="w-full text-sm" />
 
@@ -129,7 +132,7 @@ export default function AdminEventEditModal({ event, onClose }) {
 
             {!form.is_free && (
               <div>
-                <label className="block text-sm text-[var(--text-muted)]">Prix (€)</label>
+                <label className="block text-sm text-[var(--text-muted)]">Prix (XOF)</label>
                 <input type="number" min="0" step="0.01" name="price" value={form.price} onChange={onChange} className="w-full p-2 border border-[#222] rounded bg-[#0f0f0f] text-[var(--text-primary)]" />
               </div>
             )}

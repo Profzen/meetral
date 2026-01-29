@@ -115,9 +115,9 @@ export default function FilterBar({ onFiltersChange }) {
           >
             <option value="all">Tous les prix</option>
             <option value="free">Gratuit</option>
-            <option value="0-50">0 - 50€</option>
-            <option value="50-200">50 - 200€</option>
-            <option value="200+">200€+</option>
+            <option value="0-50">0 - 50 000 XOF</option>
+            <option value="50-200">50 000 - 200 000 XOF</option>
+            <option value="200+">200 000 XOF+</option>
           </select>
         </div>
 

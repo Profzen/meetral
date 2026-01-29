@@ -11,22 +11,23 @@ export default function ConfirmPage() {
   const [success, setSuccess] = useState(null);
 
   useEffect(() => {
-    // Récupérer les paramètres depuis l'URL
+    // Récupérer les paramètres depuis l'URL (hash ou query)
     const hashParams = new URLSearchParams(window.location.hash.slice(1));
-    const accessToken = hashParams.get('access_token');
-    const type = hashParams.get('type');
+    const queryParams = new URLSearchParams(window.location.search);
+    const accessToken = hashParams.get('access_token') || queryParams.get('access_token') || queryParams.get('token');
+    const type = hashParams.get('type') || queryParams.get('type');
 
     if (accessToken && type === 'signup') {
       setSuccess(true);
       setMessage('✅ Ton email a été confirmé avec succès !');
-      
+
       // Redirection automatique après 3 secondes
       setTimeout(() => {
         router.push('/auth/login');
       }, 3000);
     } else {
       setSuccess(false);
-      setMessage('❌ Le lien de confirmation n\'est pas valide ou a expiré.');
+      setMessage("❌ Le lien de confirmation n'est pas valide ou a expiré.");
     }
   }, [router]);
 
