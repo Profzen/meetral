@@ -30,7 +30,15 @@ export default function ResetPage(){
     // verify the token to create a session client-side
     (async () => {
       try{
-        const { error } = await supabase.auth.verifyOtp({ token: accessToken, type: 'recovery' });
+        // For password recovery, Supabase sends access_token directly in the URL
+        // We need to use setSession() instead of verifyOtp()
+        const refreshToken = hashParams.get('refresh_token') || searchParams.get('refresh_token');
+        
+        const { error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken
+        });
+        
         if (error) throw error;
         setStatus('ready');
         setMessage('Définis un nouveau mot de passe.');
